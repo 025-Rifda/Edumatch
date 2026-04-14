@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   TrendingUp,
@@ -14,88 +14,153 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+type Recommendation = {
+  id: number;
+  name: string;
+  match?: number;
+  percentage?: number;
+  ukt: number;
+  reasons?: string[];
+};
+
+type RecommendationResponse = {
+  top3: Recommendation[];
+  top10: Recommendation[];
+};
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+
+const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
+
+const getMajorIcon = (name: string) => {
+  const normalizedName = name.toLowerCase();
+
+  if (normalizedName.includes("informatika") || normalizedName.includes("komputer")) return "💻";
+  if (normalizedName.includes("sistem informasi") || normalizedName.includes("statistika")) return "📊";
+  if (normalizedName.includes("elektro")) return "⚡";
+  if (normalizedName.includes("matematika")) return "🔢";
+  if (normalizedName.includes("fisika")) return "🔬";
+  if (normalizedName.includes("kimia")) return "🧪";
+  if (normalizedName.includes("arsitektur")) return "🏛️";
+
+  return "🎓";
+};
+
 export default function ResultsPage() {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState<RecommendationResponse>({
+    top3: [],
+    top10: [],
+  });
 
-  const topRecommendations = [
-    {
-      id: "teknik-informatika",
-      name: "Teknik Informatika",
-      match: 92,
-      icon: "💻",
-      color: "from-[#C8B6FF] to-[#FFC8DD]",
-      tag: "Sangat Cocok",
-      tagColor: "bg-green-500",
-      reasons: [
-        "Nilai Matematika dan Fisika sangat baik (90+)",
-        "Minat tinggi di bidang teknologi dan pemecahan masalah",
-        "Budget sesuai dengan UKT rata-rata (Rp 3-5 juta/semester)",
-      ],
-      ukt: "Rp 3.000.000 - Rp 5.500.000",
-    },
-    {
-      id: "sistem-informasi",
-      name: "Sistem Informasi",
-      match: 88,
-      icon: "📊",
-      color: "from-[#A0E7E5] to-[#BDE0FE]",
-      tag: "Sangat Cocok",
-      tagColor: "bg-green-500",
-      reasons: [
-        "Kuat dalam analisis data dan logika",
-        "Minat pada teknologi dan bisnis",
-        "Sesuai dengan budget yang dipilih",
-      ],
-      ukt: "Rp 2.800.000 - Rp 5.000.000",
-    },
-    {
-      id: "teknik-elektro",
-      name: "Teknik Elektro",
-      match: 85,
-      icon: "⚡",
-      color: "from-[#FFAFCC] to-[#FFC8DD]",
-      tag: "Cocok",
-      tagColor: "bg-yellow-500",
-      reasons: [
-        "Nilai Fisika dan Matematika mendukung",
-        "Minat di bidang teknis dan inovasi",
-        "UKT sesuai kemampuan finansial",
-      ],
-      ukt: "Rp 3.200.000 - Rp 5.800.000",
-    },
-  ];
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      const storedUser = localStorage.getItem("user");
+      const storedAcademicScores = localStorage.getItem("academic_scores");
+      const storedInterestAnswers = localStorage.getItem("interest_answers");
+      const storedBudget = localStorage.getItem("budget");
 
-  const allRecommendations = [
-    { rank: 1, id: "teknik-informatika", name: "Teknik Informatika", match: 92 },
-    { rank: 2, id: "sistem-informasi", name: "Sistem Informasi", match: 88 },
-    { rank: 3, id: "teknik-elektro", name: "Teknik Elektro", match: 85 },
-    { rank: 4, id: "matematika", name: "Matematika", match: 82 },
-    { rank: 5, id: "fisika", name: "Fisika", match: 80 },
-    { rank: 6, id: "teknik-industri", name: "Teknik Industri", match: 78 },
-    { rank: 7, id: "statistika", name: "Statistika", match: 76 },
-    { rank: 8, id: "ilmu-komputer", name: "Ilmu Komputer", match: 75 },
-    { rank: 9, id: "teknik-kimia", name: "Teknik Kimia", match: 72 },
-    { rank: 10, id: "arsitektur", name: "Arsitektur", match: 70 },
-  ];
+      if (!storedUser || !storedAcademicScores || !storedInterestAnswers || !storedBudget) {
+        alert("Data analisis belum lengkap");
+        navigate("/analysis/step1");
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        const user = JSON.parse(storedUser);
+        const academicScores = JSON.parse(storedAcademicScores);
+        const interestAnswers = JSON.parse(storedInterestAnswers);
+
+        const res = await fetch("http://localhost:5000/recommend", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            academic_scores: academicScores,
+            interest_answers: interestAnswers,
+            budget: Number(storedBudget),
+          })
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          throw new Error(result.error || "Gagal mengambil rekomendasi");
+        }
+
+        setRecommendations(result);
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "Gagal mengambil rekomendasi");
+        navigate("/analysis/step1");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void fetchRecommendations();
+  }, [navigate]);
+
+  const topRecommendations = recommendations.top3.map((rec, index) => {
+    const match = Math.round(rec.match ?? rec.percentage ?? 0);
+
+    return {
+      id: slugify(rec.name),
+      name: rec.name,
+      match,
+      icon: getMajorIcon(rec.name),
+      color: [
+        "from-[#C8B6FF] to-[#FFC8DD]",
+        "from-[#A0E7E5] to-[#BDE0FE]",
+        "from-[#FFAFCC] to-[#FFC8DD]",
+      ][index] ?? "from-[#C8B6FF] to-[#FFC8DD]",
+      tag: match >= 85 ? "Sangat Cocok" : "Cocok",
+      tagColor: match >= 85 ? "bg-green-500" : "bg-yellow-500",
+      reasons: rec.reasons ?? [],
+      ukt: formatCurrency(rec.ukt),
+    };
+  });
+
+  const allRecommendations = recommendations.top10.map((rec, index) => ({
+    rank: index + 1,
+    id: slugify(rec.name),
+    name: rec.name,
+    match: Math.round(rec.match ?? rec.percentage ?? 0),
+  }));
+
+  const topPick = topRecommendations[0];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F9FF]">
+        <p className="text-[#2B2D42]">Memuat hasil rekomendasi...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-[#F8F9FF]" />
       <div className="absolute inset-0 bg-gradient-to-br from-[#C8B6FF]/20 via-[#FFC8DD]/10 to-[#BDE0FE]/20" />
 
-      {/* Floating Blobs */}
       <motion.div
         className="absolute -top-40 -right-40 w-96 h-96 bg-[#C8B6FF]/20 rounded-full blur-3xl"
         animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
         transition={{ duration: 10, repeat: Infinity }}
       />
 
-      {/* Content */}
       <div className="relative z-10 min-h-screen px-3 md:px-8 py-6 md:py-12 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -109,7 +174,6 @@ export default function ResultsPage() {
             </p>
           </motion.div>
 
-          {/* Top 3 Recommendations */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
             {topRecommendations.map((rec, index) => (
               <motion.div
@@ -130,13 +194,11 @@ export default function ResultsPage() {
                   </div>
                 )}
                 <div className="bg-white/40 backdrop-blur-2xl rounded-2xl md:rounded-[30px] p-5 md:p-8 border border-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 h-full">
-                  {/* Match Circle - Responsive & Adaptive */}
                   <div className="relative w-28 h-28 md:w-32 md:h-32 mx-auto mb-4 md:mb-6">
                     <svg
                       className="w-full h-full transform -rotate-90"
                       viewBox="0 0 120 120"
                     >
-                      {/* Background Circle */}
                       <circle
                         cx="60"
                         cy="60"
@@ -145,7 +207,6 @@ export default function ResultsPage() {
                         strokeWidth="8"
                         fill="none"
                       />
-                      {/* Progress Circle */}
                       <circle
                         cx="60"
                         cy="60"
@@ -170,25 +231,21 @@ export default function ResultsPage() {
                     </div>
                   </div>
 
-                  {/* Major Name */}
                   <h3 className="text-base md:text-xl font-bold text-[#2B2D42] text-center mb-2 md:mb-3 px-2">
                     {rec.name}
                   </h3>
 
-                  {/* Tag */}
                   <div className="flex justify-center mb-4 md:mb-6">
                     <span className={`px-3 md:px-4 py-1 md:py-1.5 ${rec.tagColor} text-white text-xs md:text-sm font-semibold rounded-full`}>
                       {rec.tag}
                     </span>
                   </div>
 
-                  {/* UKT */}
                   <div className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm text-[#2B2D42]/70 mb-3 md:mb-4 pb-3 md:pb-4 border-b border-[#2B2D42]/10">
                     <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
                     <span>UKT: {rec.ukt}</span>
                   </div>
 
-                  {/* View Details Link */}
                   <div className="text-center">
                     <span className="text-xs md:text-sm text-[#C8B6FF] font-medium hover:underline flex items-center justify-center gap-1">
                       Lihat Detail
@@ -200,7 +257,6 @@ export default function ResultsPage() {
             ))}
           </div>
 
-          {/* Explanation Section */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -212,11 +268,11 @@ export default function ResultsPage() {
                 <Heart className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </div>
               <h3 className="text-base md:text-2xl font-semibold text-[#2B2D42]">
-                Kenapa Teknik Informatika cocok untukmu?
+                {topPick ? `Kenapa ${topPick.name} cocok untukmu?` : "Hasil rekomendasi"}
               </h3>
             </div>
             <div className="space-y-2 md:space-y-3">
-              {topRecommendations[0].reasons.map((reason, index) => (
+              {(topPick?.reasons ?? []).map((reason, index) => (
                 <motion.div
                   key={index}
                   initial={{ x: -20, opacity: 0 }}
@@ -237,12 +293,15 @@ export default function ResultsPage() {
             >
               <p className="text-xs md:text-base text-[#2B2D42] font-medium flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-[#C8B6FF] flex-shrink-0" />
-                <span>Kamu punya potensi besar di bidang ini! Pertimbangkan untuk eksplorasi lebih lanjut.</span>
+                <span>
+                  {topPick
+                    ? `Kamu punya potensi besar di ${topPick.name}.`
+                    : "Belum ada hasil rekomendasi untuk ditampilkan."}
+                </span>
               </p>
             </motion.div>
           </motion.div>
 
-          {/* Top 10 Ranking */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -307,7 +366,6 @@ export default function ResultsPage() {
             </div>
           </motion.div>
 
-          {/* Action Buttons */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

@@ -11,10 +11,11 @@ import {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const profile = {
-    name: "Rizenka",
-    email: "Rin.airin@email.com",
-    major: "IPA",
+    name: user?.name || "User",
+    email: user?.email || "User",
+    major: user?.major || "User",
   };
 
   const stats = [

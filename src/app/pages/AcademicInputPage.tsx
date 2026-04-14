@@ -35,6 +35,17 @@ export default function AcademicInputPage() {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
     } else {
+      localStorage.setItem(
+        "academic_scores",
+        JSON.stringify({
+          matematika: Number(scores.matematika),
+          indonesia: Number(scores.indonesia),
+          inggris: Number(scores.inggris),
+          fisika: Number(scores.fisika),
+          kimia: Number(scores.kimia),
+          biologi: Number(scores.biologi),
+        }),
+      );
       navigate("/analysis/step2");
     }
   };

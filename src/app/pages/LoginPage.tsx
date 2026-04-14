@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({
     email: "",
     password: "",
@@ -33,15 +34,39 @@ export default function LoginPage() {
     return !newErrors.email && !newErrors.password;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      // Check if admin credentials
-      if (email === "admin@gmail.com" && password === "123") {
-        navigate("/admin-dashboard");
-      } else {
-        navigate("/dashboard");
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const res = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Login gagal");
       }
+
+      localStorage.setItem("user", JSON.stringify(result.user));
+      navigate(result.user.is_admin ? "/admin-dashboard" : "/dashboard");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Login gagal");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -201,9 +226,10 @@ export default function LoginPage() {
               type="submit"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
+              disabled={isLoading}
               className="w-full h-11 bg-gradient-to-r from-[#C8B6FF]/90 to-[#FFC8DD]/90 rounded-[12px] text-white text-[13px] font-semibold shadow-sm hover:shadow-md hover:from-[#C8B6FF] hover:to-[#FFC8DD] transition-all duration-200 flex items-center justify-center gap-2"
             >
-              Masuk
+              {isLoading ? "Memproses..." : "Masuk"}
               <ArrowRight className="w-4 h-4" />
             </motion.button>
 

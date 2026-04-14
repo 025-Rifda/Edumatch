@@ -7,6 +7,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -78,10 +79,40 @@ export default function RegisterPage() {
     return !newErrors.name && !newErrors.email && !newErrors.password && !newErrors.confirmPassword && !newErrors.major;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      navigate("/dashboard");
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const res = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Registrasi gagal");
+      }
+
+      alert(result.message || "Registrasi berhasil");
+      navigate("/login");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Registrasi gagal");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -337,9 +368,10 @@ export default function RegisterPage() {
               type="submit"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              disabled={isLoading}
               className="w-full py-4 mt-2 bg-gradient-to-r from-[#A0E7E5] to-[#C8B6FF] rounded-[14px] text-white font-semibold shadow-lg shadow-[#C8B6FF]/30 hover:shadow-xl hover:shadow-[#C8B6FF]/40 transition-all duration-300 flex items-center justify-center gap-2 group"
             >
-              Daftar Sekarang
+              {isLoading ? "Memproses..." : "Daftar Sekarang"}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </motion.button>
 

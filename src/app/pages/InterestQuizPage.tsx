@@ -72,6 +72,7 @@ export default function InterestQuizPage() {
     }
 
     if (currentQuestion === questions.length - 1) {
+      localStorage.setItem("interest_answers", JSON.stringify(answers));
       navigate("/analysis/step3");
     } else {
       setDirection(1);

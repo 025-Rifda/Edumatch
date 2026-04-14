@@ -22,6 +22,16 @@ export default function UserDashboard() {
   const [activeNav, setActiveNav] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const displayName = user?.name || "User";
+  const displayEmail = user?.email || "User";
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .map((name: string) => name[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "U";
 
   // Detect mobile screen
   useEffect(() => {
@@ -249,14 +259,14 @@ export default function UserDashboard() {
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <p className="font-semibold text-[#2B2D42]">
-                    Budi Santoso
+                    {displayName}
                   </p>
                   <p className="text-xs text-[#2B2D42]/60 mt-0.5">
-                    Siswa IPA
+                    {displayEmail}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8B6FF] to-[#A0E7E5] flex items-center justify-center text-white font-semibold shadow-lg">
-                  BS
+                  {initials}
                 </div>
               </div>
             </div>

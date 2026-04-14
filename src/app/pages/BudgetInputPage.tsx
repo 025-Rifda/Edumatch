@@ -24,6 +24,11 @@ export default function BudgetInputPage() {
     { label: "> 5 Juta", value: 7000000 },
   ];
 
+  const handleShowResults = () => {
+    localStorage.setItem("budget", budget.toString());
+    navigate("/results");
+  };
+
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
       {/* Background */}
@@ -203,7 +208,7 @@ export default function BudgetInputPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate("/results")}
+              onClick={handleShowResults}
               className="flex-1 md:flex-none px-4 md:px-8 py-2.5 md:py-3.5 text-sm md:text-base bg-gradient-to-r from-[#A0E7E5] to-[#C8B6FF] rounded-xl md:rounded-[14px] text-white font-semibold shadow-lg shadow-[#C8B6FF]/30 hover:shadow-xl hover:shadow-[#C8B6FF]/40 transition-all duration-300 flex items-center justify-center gap-2 group"
             >
               <span className="hidden md:inline">Lihat Hasil Rekomendasi</span>
