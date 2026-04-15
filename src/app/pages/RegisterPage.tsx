@@ -98,6 +98,7 @@ export default function RegisterPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          jurusan: formData.major,
         })
       });
 
