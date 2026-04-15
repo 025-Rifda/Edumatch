@@ -53,10 +53,16 @@ def initialize_database() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            jurusan TEXT NOT NULL DEFAULT 'IPA'
         )
         """
     )
+
+    cursor.execute("PRAGMA table_info(users)")
+    user_columns = {column["name"] for column in cursor.fetchall()}
+    if "jurusan" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN jurusan TEXT NOT NULL DEFAULT 'IPA'")
 
     cursor.execute(
         """

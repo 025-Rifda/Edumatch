@@ -17,14 +17,29 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
+type HistoryMajor = {
+  name: string;
+  match?: number;
+  percentage?: number;
+};
+
+type HistoryItem = {
+  id: number;
+  created_at: string;
+  top_major: HistoryMajor | null;
+};
+
 export default function UserDashboard() {
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const displayName = user?.name || "User";
-  const displayEmail = user?.email || "User";
+  const displayName = user?.name || "-";
+  const displayEmail = user?.email || "-";
+  const displayJurusan = user?.jurusan || "-";
   const initials = displayName
     .split(" ")
     .filter(Boolean)
@@ -49,6 +64,38 @@ export default function UserDashboard() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user?.id) {
+        setHistory([]);
+        setIsLoadingHistory(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/history?user_id=${user.id}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Gagal mengambil riwayat");
+        }
+
+        setHistory(data.history ?? []);
+      } catch {
+        setHistory([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    void fetchHistory();
+  }, [user?.id]);
+
+  const latestHistory = history[0] ?? null;
+  const latestMatch = Math.round(
+    latestHistory?.top_major?.match ?? latestHistory?.top_major?.percentage ?? 0,
+  );
 
   const navItems = [
     {
@@ -262,7 +309,7 @@ export default function UserDashboard() {
                     {displayName}
                   </p>
                   <p className="text-xs text-[#2B2D42]/60 mt-0.5">
-                    {displayEmail}
+                    {displayEmail} • {displayJurusan}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8B6FF] to-[#A0E7E5] flex items-center justify-center text-white font-semibold shadow-lg">
@@ -330,69 +377,80 @@ export default function UserDashboard() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-white/50 rounded-[20px] p-5 border border-white/60">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="text-sm text-[#2B2D42]/60 mb-1">
-                          Rekomendasi Jurusan
-                        </p>
-                        <h5 className="text-xl font-semibold text-[#2B2D42]">
-                          Teknik Informatika
-                        </h5>
-                      </div>
-                      {/* Circular Progress */}
-                      <div className="relative w-20 h-20">
-                        <svg className="w-20 h-20 transform -rotate-90">
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r="32"
-                            stroke="#E5E7EB"
-                            strokeWidth="6"
-                            fill="none"
-                          />
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r="32"
-                            stroke="url(#gradient)"
-                            strokeWidth="6"
-                            fill="none"
-                            strokeDasharray={`${2 * Math.PI * 32}`}
-                            strokeDashoffset={`${2 * Math.PI * 32 * (1 - 0.89)}`}
-                            strokeLinecap="round"
-                          />
-                          <defs>
-                            <linearGradient
-                              id="gradient"
-                              x1="0%"
-                              y1="0%"
-                              x2="100%"
-                              y2="100%"
-                            >
-                              <stop
-                                offset="0%"
-                                stopColor="#C8B6FF"
-                              />
-                              <stop
-                                offset="100%"
-                                stopColor="#A0E7E5"
-                              />
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-lg font-bold text-[#2B2D42]">
-                            89%
-                          </span>
+                  {isLoadingHistory ? (
+                    <div className="bg-white/50 rounded-[20px] p-5 border border-white/60">
+                      <p className="text-sm text-[#2B2D42]/60">Memuat riwayat analisis...</p>
+                    </div>
+                  ) : latestHistory ? (
+                    <div className="bg-white/50 rounded-[20px] p-5 border border-white/60">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-[#2B2D42]/60 mb-1">
+                            Rekomendasi Jurusan
+                          </p>
+                          <h5 className="text-xl font-semibold text-[#2B2D42]">
+                            {latestHistory.top_major?.name ?? "-"}
+                          </h5>
+                        </div>
+                        <div className="relative w-20 h-20">
+                          <svg className="w-20 h-20 transform -rotate-90">
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="32"
+                              stroke="#E5E7EB"
+                              strokeWidth="6"
+                              fill="none"
+                            />
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="32"
+                              stroke="url(#gradient)"
+                              strokeWidth="6"
+                              fill="none"
+                              strokeDasharray={`${2 * Math.PI * 32}`}
+                              strokeDashoffset={`${2 * Math.PI * 32 * (1 - latestMatch / 100)}`}
+                              strokeLinecap="round"
+                            />
+                            <defs>
+                              <linearGradient
+                                id="gradient"
+                                x1="0%"
+                                y1="0%"
+                                x2="100%"
+                                y2="100%"
+                              >
+                                <stop
+                                  offset="0%"
+                                  stopColor="#C8B6FF"
+                                />
+                                <stop
+                                  offset="100%"
+                                  stopColor="#A0E7E5"
+                                />
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-lg font-bold text-[#2B2D42]">
+                              {latestMatch}%
+                            </span>
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-2 text-sm text-[#2B2D42]/60">
+                        <TrendingUp className="w-4 h-4 text-green-500" />
+                        <span>
+                          {latestMatch >= 85 ? "Kesesuaian sangat tinggi" : "Kesesuaian tercatat"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-[#2B2D42]/60">
-                      <TrendingUp className="w-4 h-4 text-green-500" />
-                      <span>Kesesuaian sangat tinggi</span>
+                  ) : (
+                    <div className="bg-white/50 rounded-[20px] p-5 border border-white/60">
+                      <p className="text-sm text-[#2B2D42]/60">Belum ada riwayat analisis</p>
                     </div>
-                  </div>
+                  )}
 
                   <motion.button
                     whileHover={{ x: 4 }}

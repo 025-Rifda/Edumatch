@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   User,
@@ -9,18 +10,86 @@ import {
   Award,
 } from "lucide-react";
 
+type HistoryMajor = {
+  name: string;
+};
+
+type HistoryItem = {
+  id: number;
+  created_at: string;
+  top_major: HistoryMajor | null;
+};
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user?.id) {
+        setHistory([]);
+        setIsLoadingHistory(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/history?user_id=${user.id}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Gagal mengambil riwayat");
+        }
+
+        setHistory(data.history ?? []);
+      } catch {
+        setHistory([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    void fetchHistory();
+  }, [user?.id]);
+
   const profile = {
-    name: user?.name || "User",
-    email: user?.email || "User",
-    major: user?.major || "User",
+    name: user?.name || "-",
+    email: user?.email || "-",
+    major: user?.jurusan || "-",
   };
 
+  const favoriteMajor = useMemo(() => {
+    if (history.length === 0) {
+      return "-";
+    }
+
+    const majorCounts = history.reduce<Record<string, number>>((accumulator, item) => {
+      const majorName = item.top_major?.name;
+      if (!majorName) {
+        return accumulator;
+      }
+
+      accumulator[majorName] = (accumulator[majorName] ?? 0) + 1;
+      return accumulator;
+    }, {});
+
+    return Object.entries(majorCounts).sort((first, second) => second[1] - first[1])[0]?.[0] ?? "-";
+  }, [history]);
+
   const stats = [
-    { label: "Jumlah Analisis", value: "4", icon: BarChart3, color: "from-[#C8B6FF] to-[#FFC8DD]" },
-    { label: "Jurusan Favorit", value: "Informatika", icon: Award, color: "from-[#A0E7E5] to-[#BDE0FE]" },
+    {
+      label: "Jumlah Analisis",
+      value: isLoadingHistory ? "..." : String(history.length),
+      icon: BarChart3,
+      color: "from-[#C8B6FF] to-[#FFC8DD]",
+    },
+    {
+      label: "Jurusan Favorit",
+      value: isLoadingHistory ? "..." : favoriteMajor,
+      icon: Award,
+      color: "from-[#A0E7E5] to-[#BDE0FE]",
+    },
   ];
 
   return (
@@ -78,7 +147,7 @@ export default function ProfilePage() {
               <div className="flex items-start gap-3 md:gap-6 pb-4 md:pb-6 border-b border-white/60">
                 <div className="relative flex-shrink-0">
                   <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#C8B6FF] to-[#A0E7E5] flex items-center justify-center text-white text-xl md:text-3xl font-semibold shadow-lg">
-                    {profile.name.split(" ").map(n => n[0]).join("")}
+                    {profile.name.split(" ").filter(Boolean).map((namePart) => namePart[0]).join("").slice(0, 2) || "U"}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
