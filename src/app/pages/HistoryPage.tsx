@@ -251,7 +251,7 @@ export default function HistoryPage() {
 
                           <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
                             <div className="flex-1 md:text-right">
-                              <p className="text-[10px] md:text-sm text-[#2B2D42]/60 mb-1">Kesesuaian</p>
+                              <p className="text-[10px] md:text-sm text-[#2B2D42]/60 mb-1"></p>
                               <div className="flex items-center gap-2">
                                 <div className="flex-1 md:w-20 h-1.5 md:h-2 bg-[#2B2D42]/10 rounded-full overflow-hidden">
                                   <motion.div
