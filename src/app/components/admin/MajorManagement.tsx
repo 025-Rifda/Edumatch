@@ -1,28 +1,27 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import { Search, Edit, Trash2, X, Check, AlertCircle } from "lucide-react";
+import { majorEntries } from "../../../data/majors";
 
 interface Major {
   id: number;
+  slug: string;
   name: string;
   field: string;
   minScore: number;
 }
 
-const dummyMajors: Major[] = [
-  { id: 1, name: "Teknik Informatika", field: "Saintek", minScore: 85 },
-  { id: 2, name: "Kedokteran", field: "Saintek", minScore: 90 },
-  { id: 3, name: "Manajemen", field: "Soshum", minScore: 75 },
-  { id: 4, name: "Psikologi", field: "Soshum", minScore: 78 },
-  { id: 5, name: "Teknik Elektro", field: "Saintek", minScore: 82 },
-  { id: 6, name: "Hukum", field: "Soshum", minScore: 80 },
-  { id: 7, name: "Akuntansi", field: "Soshum", minScore: 76 },
-  { id: 8, name: "Farmasi", field: "Saintek", minScore: 83 },
-];
+const initialMajors: Major[] = majorEntries.map((major) => ({
+  id: major.id,
+  slug: major.slug,
+  name: major.name,
+  field: major.field,
+  minScore: major.minScore,
+}));
 
 export function MajorManagement() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [majors, setMajors] = useState<Major[]>(dummyMajors);
+  const [majors, setMajors] = useState<Major[]>(initialMajors);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ name: "", field: "", minScore: "" });
   const [errors, setErrors] = useState({ minScore: "" });
@@ -30,7 +29,7 @@ export function MajorManagement() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
   const filteredMajors = majors.filter((major) =>
-    major.name.toLowerCase().includes(searchQuery.toLowerCase())
+    `${major.name} ${major.slug}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleEdit = (major: Major) => {
@@ -45,7 +44,7 @@ export function MajorManagement() {
 
   const validateScore = (value: string): boolean => {
     const numValue = parseFloat(value);
-    if (value === "" || isNaN(numValue)) {
+    if (value === "" || Number.isNaN(numValue)) {
       setErrors({ minScore: "Nilai wajib diisi" });
       return false;
     }
@@ -85,12 +84,7 @@ export function MajorManagement() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      {/* Success Notification */}
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <AnimatePresence>
         {showSuccess && (
           <motion.div
@@ -110,16 +104,12 @@ export function MajorManagement() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Kelola Data Jurusan
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Kelola Data Jurusan</h2>
           <p className="text-gray-600">Edit atau hapus data jurusan</p>
         </div>
 
-        {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -132,24 +122,15 @@ export function MajorManagement() {
         </div>
       </div>
 
-      {/* Majors Table */}
       <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">
-                  Nama Jurusan
-                </th>
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">
-                  Bidang Keilmuan
-                </th>
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">
-                  Nilai Minimum Jurusan
-                </th>
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">
-                  Aksi
-                </th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">Nama Jurusan</th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">Bidang Keilmuan</th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">Nilai Minimum Jurusan</th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -167,18 +148,15 @@ export function MajorManagement() {
                         <input
                           type="text"
                           value={editForm.name}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, name: e.target.value })
-                          }
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                           className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B6FF]"
                         />
+                        <p className="text-xs text-gray-400 mt-1">Slug: {major.slug}</p>
                       </td>
                       <td className="py-4 px-4">
                         <select
                           value={editForm.field}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, field: e.target.value })
-                          }
+                          onChange={(e) => setEditForm({ ...editForm, field: e.target.value })}
                           className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B6FF]"
                         >
                           <option value="Saintek">Saintek</option>
@@ -195,9 +173,7 @@ export function MajorManagement() {
                               validateScore(e.target.value);
                             }}
                             className={`w-full px-3 py-2 bg-white/50 border rounded-xl focus:outline-none focus:ring-2 ${
-                              errors.minScore
-                                ? "border-red-400 focus:ring-red-400"
-                                : "border-gray-200 focus:ring-[#C8B6FF]"
+                              errors.minScore ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-[#C8B6FF]"
                             }`}
                           />
                           {errors.minScore && (
@@ -210,20 +186,10 @@ export function MajorManagement() {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={handleSave}
-                            className="p-2 bg-gradient-to-r from-[#C8B6FF] to-[#FFC8DD] text-white rounded-lg hover:shadow-lg transition-all"
-                          >
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleSave} className="p-2 bg-gradient-to-r from-[#C8B6FF] to-[#FFC8DD] text-white rounded-lg hover:shadow-lg transition-all">
                             <Check className="w-4 h-4" />
                           </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => setEditingId(null)}
-                            className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all"
-                          >
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setEditingId(null)} className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all">
                             <X className="w-4 h-4" />
                           </motion.button>
                         </div>
@@ -232,32 +198,21 @@ export function MajorManagement() {
                   ) : (
                     <>
                       <td className="py-4 px-4 font-medium text-gray-800">
-                        {major.name}
+                        <div>{major.name}</div>
+                        <div className="text-xs text-gray-400 mt-1">{major.slug}</div>
                       </td>
                       <td className="py-4 px-4">
                         <span className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-[#BDE0FE]/30 to-[#A0E7E5]/30 text-gray-700">
                           {major.field}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-gray-600 font-semibold">
-                        {major.minScore}
-                      </td>
+                      <td className="py-4 px-4 text-gray-600 font-semibold">{major.minScore}</td>
                       <td className="py-4 px-4">
                         <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => handleEdit(major)}
-                            className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"
-                          >
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleEdit(major)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all">
                             <Edit className="w-4 h-4" />
                           </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => setShowDeleteConfirm(major.id)}
-                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
-                          >
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowDeleteConfirm(major.id)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all">
                             <Trash2 className="w-4 h-4" />
                           </motion.button>
                         </div>
@@ -271,7 +226,6 @@ export function MajorManagement() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div
@@ -291,28 +245,13 @@ export function MajorManagement() {
               <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800 text-center mb-2">
-                Konfirmasi Hapus
-              </h3>
-              <p className="text-gray-600 text-center mb-6">
-                Apakah Anda yakin ingin menghapus data jurusan ini? Tindakan ini
-                tidak dapat dibatalkan.
-              </p>
+              <h3 className="text-xl font-bold text-gray-800 text-center mb-2">Konfirmasi Hapus</h3>
+              <p className="text-gray-600 text-center mb-6">Apakah Anda yakin ingin menghapus data jurusan ini? Tindakan ini tidak dapat dibatalkan.</p>
               <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowDeleteConfirm(null)}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-2xl font-semibold hover:bg-gray-300 transition-all"
-                >
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setShowDeleteConfirm(null)} className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-2xl font-semibold hover:bg-gray-300 transition-all">
                   Batal
                 </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleDelete(showDeleteConfirm)}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-semibold hover:shadow-lg transition-all"
-                >
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleDelete(showDeleteConfirm)} className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-semibold hover:shadow-lg transition-all">
                   Hapus
                 </motion.button>
               </div>

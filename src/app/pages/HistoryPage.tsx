@@ -2,9 +2,11 @@ import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { History, Calendar, TrendingUp, ChevronRight, ArrowLeft, Filter, Search } from "lucide-react";
+import { majors } from "../../data/majors";
 
 type HistoryMajor = {
   id: number;
+  slug?: string;
   name: string;
   match?: number;
   percentage?: number;
@@ -25,18 +27,6 @@ const formatDate = (value: string) =>
   }).format(new Date(value));
 
 const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
-
-const getMajorIcon = (name: string) => {
-  const normalizedName = name.toLowerCase();
-
-  if (normalizedName.includes("informatika") || normalizedName.includes("komputer")) return "💻";
-  if (normalizedName.includes("sistem informasi") || normalizedName.includes("statistika")) return "📊";
-  if (normalizedName.includes("elektro")) return "⚡";
-  if (normalizedName.includes("matematika")) return "🔢";
-  if (normalizedName.includes("fisika")) return "🔬";
-
-  return "🎓";
-};
 
 export default function HistoryPage() {
   const navigate = useNavigate();
@@ -85,12 +75,17 @@ export default function HistoryPage() {
       rawDate: item.created_at,
       topMajor: item.top_major?.name ?? "-",
       match: Math.round(item.top_major?.match ?? item.top_major?.percentage ?? 0),
-      majors: (item.top10 ?? []).slice(0, 5).map((major) => ({
-        id: slugify(major.name),
-        name: major.name,
-        match: Math.round(major.match ?? major.percentage ?? 0),
-        icon: getMajorIcon(major.name),
-      })),
+      majors: (item.top10 ?? []).slice(0, 5).map((major) => {
+        const slug = major.slug ?? slugify(major.name);
+        const majorData = majors[slug];
+
+        return {
+          id: slug,
+          name: majorData?.name ?? major.name,
+          match: Math.round(major.match ?? major.percentage ?? 0),
+          icon: majorData?.icon ?? "??",
+        };
+      }),
     }));
 
     const searchedHistory = mappedHistory.filter((item) =>
@@ -203,9 +198,7 @@ export default function HistoryPage() {
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-[#C8B6FF]/20 to-[#FFC8DD]/20 flex items-center justify-center mb-4 md:mb-6">
                   <History className="w-12 h-12 md:w-16 md:h-16 text-[#C8B6FF]/50" strokeWidth={1.5} />
                 </div>
-                <h3 className="text-lg md:text-2xl font-semibold text-[#2B2D42] mb-2 md:mb-3">
-                  Belum ada riwayat analisis
-                </h3>
+                <h3 className="text-lg md:text-2xl font-semibold text-[#2B2D42] mb-2 md:mb-3">Belum ada riwayat analisis</h3>
                 <p className="text-xs md:text-base text-[#2B2D42]/60 mb-6 md:mb-8 text-center max-w-md">
                   Mulai analisis pertamamu untuk menemukan jurusan yang tepat
                 </p>
@@ -228,10 +221,7 @@ export default function HistoryPage() {
                     transition={{ delay: 0.2 + index * 0.1 }}
                     className="bg-white/40 backdrop-blur-2xl rounded-xl md:rounded-[24px] border border-white/60 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
-                    <div
-                      className="p-3 md:p-6 cursor-pointer"
-                      onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                    >
+                    <div className="p-3 md:p-6 cursor-pointer" onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}>
                       <div className="flex items-center justify-between gap-2 md:gap-0">
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6 flex-1 min-w-0">
                           <div className="flex items-center gap-2 md:gap-3 w-full md:min-w-[180px]">
@@ -251,7 +241,6 @@ export default function HistoryPage() {
 
                           <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
                             <div className="flex-1 md:text-right">
-                              <p className="text-[10px] md:text-sm text-[#2B2D42]/60 mb-1"></p>
                               <div className="flex items-center gap-2">
                                 <div className="flex-1 md:w-20 h-1.5 md:h-2 bg-[#2B2D42]/10 rounded-full overflow-hidden">
                                   <motion.div
@@ -269,11 +258,7 @@ export default function HistoryPage() {
                           </div>
                         </div>
 
-                        <motion.div
-                          animate={{ rotate: expandedId === item.id ? 90 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="ml-2 md:ml-4 flex-shrink-0"
-                        >
+                        <motion.div animate={{ rotate: expandedId === item.id ? 90 : 0 }} transition={{ duration: 0.3 }} className="ml-2 md:ml-4 flex-shrink-0">
                           <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-[#C8B6FF]" />
                         </motion.div>
                       </div>

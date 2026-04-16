@@ -21,12 +21,23 @@ def get_major_by_id(major_id: int) -> Optional[dict]:
     return dict(row) if row else None
 
 
-def create_major(name: str, min_score: float, ukt: int) -> int:
+def create_major(
+    slug: str,
+    name: str,
+    field: str,
+    min_score: float,
+    ukt: int,
+    ukt_min: int,
+    ukt_max: int,
+) -> int:
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute(
-        "INSERT INTO majors (name, min_score, ukt) VALUES (?, ?, ?)",
-        (name, min_score, ukt),
+        """
+        INSERT INTO majors (slug, name, field, min_score, ukt, ukt_min, ukt_max)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (slug, name, field, min_score, ukt, ukt_min, ukt_max),
     )
     connection.commit()
     major_id = cursor.lastrowid
@@ -34,16 +45,25 @@ def create_major(name: str, min_score: float, ukt: int) -> int:
     return major_id
 
 
-def update_major(major_id: int, name: str, min_score: float, ukt: int) -> None:
+def update_major(
+    major_id: int,
+    slug: str,
+    name: str,
+    field: str,
+    min_score: float,
+    ukt: int,
+    ukt_min: int,
+    ukt_max: int,
+) -> None:
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute(
         """
         UPDATE majors
-        SET name = ?, min_score = ?, ukt = ?
+        SET slug = ?, name = ?, field = ?, min_score = ?, ukt = ?, ukt_min = ?, ukt_max = ?
         WHERE id = ?
         """,
-        (name, min_score, ukt, major_id),
+        (slug, name, field, min_score, ukt, ukt_min, ukt_max, major_id),
     )
     connection.commit()
     connection.close()

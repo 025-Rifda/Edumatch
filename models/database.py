@@ -3,31 +3,12 @@ from pathlib import Path
 
 from werkzeug.security import generate_password_hash
 
+from models.major_catalog import DEFAULT_MAJORS
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATABASE_PATH = DATA_DIR / "edumatch.db"
-
-DEFAULT_MAJORS = [
-    ("Teknik Informatika", 82.0, 4500000),
-    ("Sistem Informasi", 78.0, 4000000),
-    ("Ilmu Komputer", 80.0, 4300000),
-    ("Teknik Elektro", 81.0, 4700000),
-    ("Teknik Industri", 79.0, 4200000),
-    ("Kedokteran", 90.0, 9500000),
-    ("Farmasi", 84.0, 6800000),
-    ("Keperawatan", 78.0, 5200000),
-    ("Manajemen", 75.0, 3600000),
-    ("Akuntansi", 76.0, 3400000),
-    ("Ilmu Komunikasi", 74.0, 3900000),
-    ("Psikologi", 77.0, 4100000),
-    ("Hukum", 76.0, 3500000),
-    ("Matematika", 80.0, 3000000),
-    ("Statistika", 81.0, 3200000),
-    ("Biologi", 77.0, 3100000),
-    ("Kimia", 78.0, 3300000),
-    ("Pendidikan Dokter", 92.0, 10000000),
-]
 
 DEFAULT_ADMIN = {
     "name": "Admin EduMatch",
@@ -68,12 +49,27 @@ def initialize_database() -> None:
         """
         CREATE TABLE IF NOT EXISTS majors (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT NOT NULL UNIQUE,
             name TEXT NOT NULL UNIQUE,
+            field TEXT NOT NULL,
             min_score REAL NOT NULL,
-            ukt INTEGER NOT NULL
+            ukt INTEGER NOT NULL,
+            ukt_min INTEGER NOT NULL DEFAULT 0,
+            ukt_max INTEGER NOT NULL DEFAULT 0
         )
         """
     )
+
+    cursor.execute("PRAGMA table_info(majors)")
+    major_columns = {column["name"] for column in cursor.fetchall()}
+    if "slug" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN slug TEXT")
+    if "field" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN field TEXT NOT NULL DEFAULT 'Soshum'")
+    if "ukt_min" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN ukt_min INTEGER NOT NULL DEFAULT 0")
+    if "ukt_max" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN ukt_max INTEGER NOT NULL DEFAULT 0")
 
     cursor.execute(
         """
@@ -87,12 +83,7 @@ def initialize_database() -> None:
         """
     )
 
-    cursor.execute("SELECT COUNT(*) AS total FROM majors")
-    if cursor.fetchone()["total"] == 0:
-        cursor.executemany(
-            "INSERT INTO majors (name, min_score, ukt) VALUES (?, ?, ?)",
-            DEFAULT_MAJORS,
-        )
+    _sync_default_majors(cursor)
 
     cursor.execute("SELECT id FROM users WHERE email = ?", (DEFAULT_ADMIN["email"],))
     admin_row = cursor.fetchone()
@@ -108,3 +99,56 @@ def initialize_database() -> None:
 
     connection.commit()
     connection.close()
+
+
+
+def _sync_default_majors(cursor: sqlite3.Cursor) -> None:
+    valid_slugs = {major["slug"] for major in DEFAULT_MAJORS}
+    valid_names = {major["name"] for major in DEFAULT_MAJORS}
+
+    cursor.execute("SELECT id, slug, name FROM majors")
+    existing_rows = [dict(row) for row in cursor.fetchall()]
+
+    for row in existing_rows:
+        row_slug = row.get("slug")
+        row_name = row.get("name")
+        if row_slug not in valid_slugs and row_name not in valid_names:
+            cursor.execute("DELETE FROM majors WHERE id = ?", (row["id"],))
+
+    for major in DEFAULT_MAJORS:
+        cursor.execute("SELECT id FROM majors WHERE slug = ? OR name = ?", (major["slug"], major["name"]))
+        existing = cursor.fetchone()
+        if existing is None:
+            cursor.execute(
+                """
+                INSERT INTO majors (slug, name, field, min_score, ukt, ukt_min, ukt_max)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    major["slug"],
+                    major["name"],
+                    major["field"],
+                    major["min_score"],
+                    major["ukt"],
+                    major["ukt_min"],
+                    major["ukt_max"],
+                ),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE majors
+                SET slug = ?, name = ?, field = ?, min_score = ?, ukt = ?, ukt_min = ?, ukt_max = ?
+                WHERE id = ?
+                """,
+                (
+                    major["slug"],
+                    major["name"],
+                    major["field"],
+                    major["min_score"],
+                    major["ukt"],
+                    major["ukt_min"],
+                    major["ukt_max"],
+                    existing["id"],
+                ),
+            )

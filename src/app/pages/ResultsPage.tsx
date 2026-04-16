@@ -13,10 +13,12 @@ import {
   Home,
   ChevronRight,
 } from "lucide-react";
+import { majors } from "../../data/majors";
 
 type Recommendation = {
   id: number;
-  name: string;
+  slug?: string;
+  name?: string;
   match?: number;
   percentage?: number;
   ukt: number;
@@ -34,22 +36,6 @@ const formatCurrency = (value: number) =>
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(value);
-
-const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
-
-const getMajorIcon = (name: string) => {
-  const normalizedName = name.toLowerCase();
-
-  if (normalizedName.includes("informatika") || normalizedName.includes("komputer")) return "💻";
-  if (normalizedName.includes("sistem informasi") || normalizedName.includes("statistika")) return "📊";
-  if (normalizedName.includes("elektro")) return "⚡";
-  if (normalizedName.includes("matematika")) return "🔢";
-  if (normalizedName.includes("fisika")) return "🔬";
-  if (normalizedName.includes("kimia")) return "🧪";
-  if (normalizedName.includes("arsitektur")) return "🏛️";
-
-  return "🎓";
-};
 
 export default function ResultsPage() {
   const navigate = useNavigate();
@@ -83,14 +69,14 @@ export default function ResultsPage() {
         const res = await fetch("http://localhost:5000/recommend", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             user_id: user.id,
             academic_scores: academicScores,
             interest_answers: interestAnswers,
             budget: Number(storedBudget),
-          })
+          }),
         });
 
         const result = await res.json();
@@ -112,29 +98,36 @@ export default function ResultsPage() {
   }, [navigate]);
 
   const topRecommendations = recommendations.top3.map((rec, index) => {
+    const slug = rec.slug ?? "";
+    const majorData = majors[slug];
     const match = Math.round(rec.match ?? rec.percentage ?? 0);
 
     return {
-      id: slugify(rec.name),
-      name: rec.name,
+      slug,
+      name: majorData?.name ?? rec.name ?? "Data jurusan tidak ditemukan",
       match,
-      icon: getMajorIcon(rec.name),
-      color: [
+      description: majorData?.description ?? "Data jurusan tidak ditemukan",
+      icon: majorData?.icon ?? "??",
+      color:
+        majorData?.color ??
+        [
+          "from-[#C8B6FF] to-[#FFC8DD]",
+          "from-[#A0E7E5] to-[#BDE0FE]",
+          "from-[#FFAFCC] to-[#FFC8DD]",
+        ][index] ??
         "from-[#C8B6FF] to-[#FFC8DD]",
-        "from-[#A0E7E5] to-[#BDE0FE]",
-        "from-[#FFAFCC] to-[#FFC8DD]",
-      ][index] ?? "from-[#C8B6FF] to-[#FFC8DD]",
       tag: match >= 85 ? "Sangat Cocok" : "Cocok",
       tagColor: match >= 85 ? "bg-green-500" : "bg-yellow-500",
       reasons: rec.reasons ?? [],
+      careerProspects: majorData?.careerProspects ?? [],
       ukt: formatCurrency(rec.ukt),
     };
   });
 
   const allRecommendations = recommendations.top10.map((rec, index) => ({
     rank: index + 1,
-    id: slugify(rec.name),
-    name: rec.name,
+    slug: rec.slug ?? "",
+    name: majors[rec.slug ?? ""]?.name ?? rec.name ?? "Data jurusan tidak ditemukan",
     match: Math.round(rec.match ?? rec.percentage ?? 0),
   }));
 
@@ -177,12 +170,12 @@ export default function ResultsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
             {topRecommendations.map((rec, index) => (
               <motion.div
-                key={rec.name}
+                key={`${rec.slug}-${index}`}
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 + index * 0.1 }}
                 className="relative cursor-pointer"
-                onClick={() => navigate(`/major/${rec.id}`)}
+                onClick={() => navigate(`/major/${rec.slug}`, { state: { match: rec.match } })}
                 whileHover={{ y: -5 }}
               >
                 {index === 0 && (
@@ -195,18 +188,8 @@ export default function ResultsPage() {
                 )}
                 <div className="bg-white/40 backdrop-blur-2xl rounded-2xl md:rounded-[30px] p-5 md:p-8 border border-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 h-full">
                   <div className="relative w-28 h-28 md:w-32 md:h-32 mx-auto mb-4 md:mb-6">
-                    <svg
-                      className="w-full h-full transform -rotate-90"
-                      viewBox="0 0 120 120"
-                    >
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r="52"
-                        stroke="#E5E7EB"
-                        strokeWidth="8"
-                        fill="none"
-                      />
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="52" stroke="#E5E7EB" strokeWidth="8" fill="none" />
                       <circle
                         cx="60"
                         cy="60"
@@ -235,6 +218,10 @@ export default function ResultsPage() {
                     {rec.name}
                   </h3>
 
+                  <p className="text-xs md:text-sm text-[#2B2D42]/70 text-center mb-4">
+                    {rec.description}
+                  </p>
+
                   <div className="flex justify-center mb-4 md:mb-6">
                     <span className={`px-3 md:px-4 py-1 md:py-1.5 ${rec.tagColor} text-white text-xs md:text-sm font-semibold rounded-full`}>
                       {rec.tag}
@@ -244,6 +231,19 @@ export default function ResultsPage() {
                   <div className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm text-[#2B2D42]/70 mb-3 md:mb-4 pb-3 md:pb-4 border-b border-[#2B2D42]/10">
                     <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
                     <span>UKT: {rec.ukt}</span>
+                  </div>
+
+                  <div className="mb-3 md:mb-4">
+                    <p className="text-[11px] md:text-xs font-semibold text-[#2B2D42]/70 text-center mb-2">
+                      Prospek Karir
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {rec.careerProspects.slice(0, 2).map((career) => (
+                        <span key={career.title} className="px-2.5 py-1 bg-white/60 rounded-full text-[10px] md:text-xs text-[#2B2D42]/75">
+                          {career.title}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="text-center">
@@ -272,7 +272,13 @@ export default function ResultsPage() {
               </h3>
             </div>
             <div className="space-y-2 md:space-y-3">
-              {(topPick?.reasons ?? []).map((reason, index) => (
+              {(
+                (topPick?.reasons?.length ?? 0) > 0
+                  ? topPick?.reasons
+                  : topPick
+                    ? [topPick.description]
+                    : []
+              ).map((reason, index) => (
                 <motion.div
                   key={index}
                   initial={{ x: -20, opacity: 0 }}
@@ -294,9 +300,7 @@ export default function ResultsPage() {
               <p className="text-xs md:text-base text-[#2B2D42] font-medium flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-[#C8B6FF] flex-shrink-0" />
                 <span>
-                  {topPick
-                    ? `Kamu punya potensi besar di ${topPick.name}.`
-                    : "Belum ada hasil rekomendasi untuk ditampilkan."}
+                  {topPick ? `Kamu punya potensi besar di ${topPick.name}.` : "Belum ada hasil rekomendasi untuk ditampilkan."}
                 </span>
               </p>
             </motion.div>
@@ -313,14 +317,9 @@ export default function ResultsPage() {
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-[#FFAFCC] to-[#FFC8DD] flex items-center justify-center flex-shrink-0">
                   <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 </div>
-                <h3 className="text-base md:text-2xl font-semibold text-[#2B2D42]">
-                  Top 10 Rekomendasi
-                </h3>
+                <h3 className="text-base md:text-2xl font-semibold text-[#2B2D42]">Top 10 Rekomendasi</h3>
               </div>
-              <button
-                onClick={() => setShowAll(!showAll)}
-                className="text-xs md:text-sm text-[#C8B6FF] font-medium hover:underline flex items-center gap-1"
-              >
+              <button onClick={() => setShowAll(!showAll)} className="text-xs md:text-sm text-[#C8B6FF] font-medium hover:underline flex items-center gap-1">
                 {showAll ? "Sembunyikan" : "Lihat Semua"}
                 <ChevronRight className={`w-3 h-3 md:w-4 md:h-4 transition-transform ${showAll ? "rotate-90" : ""}`} />
               </button>
@@ -332,7 +331,7 @@ export default function ResultsPage() {
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.8 + index * 0.05 }}
-                  onClick={() => navigate(`/major/${rec.id}`)}
+                  onClick={() => navigate(`/major/${rec.slug}`, { state: { match: rec.match } })}
                   className="flex items-center justify-between p-3 md:p-4 bg-white/50 rounded-xl md:rounded-[16px] hover:bg-white/70 transition-all duration-200 group cursor-pointer gap-2"
                 >
                   <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">

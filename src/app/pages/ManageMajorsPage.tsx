@@ -11,9 +11,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Link } from "react-router";
+import { majorEntries } from "../../data/majors";
 
 interface Major {
   id: number;
+  slug: string;
   name: string;
   field: string;
   minScore: number;
@@ -21,76 +23,19 @@ interface Major {
   uktMax: number;
 }
 
-const dummyMajors: Major[] = [
-  {
-    id: 1,
-    name: "Teknik Informatika",
-    field: "Saintek",
-    minScore: 85,
-    uktMin: 500000,
-    uktMax: 10000000,
-  },
-  {
-    id: 2,
-    name: "Kedokteran",
-    field: "Saintek",
-    minScore: 90,
-    uktMin: 1000000,
-    uktMax: 25000000,
-  },
-  {
-    id: 3,
-    name: "Manajemen",
-    field: "Soshum",
-    minScore: 75,
-    uktMin: 500000,
-    uktMax: 12000000,
-  },
-  {
-    id: 4,
-    name: "Psikologi",
-    field: "Soshum",
-    minScore: 78,
-    uktMin: 500000,
-    uktMax: 10000000,
-  },
-  {
-    id: 5,
-    name: "Teknik Elektro",
-    field: "Saintek",
-    minScore: 82,
-    uktMin: 500000,
-    uktMax: 9000000,
-  },
-  {
-    id: 6,
-    name: "Hukum",
-    field: "Soshum",
-    minScore: 80,
-    uktMin: 500000,
-    uktMax: 11000000,
-  },
-  {
-    id: 7,
-    name: "Akuntansi",
-    field: "Soshum",
-    minScore: 76,
-    uktMin: 500000,
-    uktMax: 10000000,
-  },
-  {
-    id: 8,
-    name: "Farmasi",
-    field: "Saintek",
-    minScore: 83,
-    uktMin: 500000,
-    uktMax: 15000000,
-  },
-];
+const initialMajors: Major[] = majorEntries.map((major) => ({
+  id: major.id,
+  slug: major.slug,
+  name: major.name,
+  field: major.field,
+  minScore: major.minScore,
+  uktMin: major.uktMin,
+  uktMax: major.uktMax,
+}));
 
 export default function ManageMajorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [majors, setMajors] = useState<Major[]>(dummyMajors);
+  const [majors, setMajors] = useState<Major[]>(initialMajors);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -105,13 +50,11 @@ export default function ManageMajorsPage() {
     uktMax: "",
   });
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(
-    null
-  );
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
 
   const filteredMajors = majors.filter((major) =>
-    major.name.toLowerCase().includes(searchQuery.toLowerCase())
+    `${major.name} ${major.slug}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleEdit = (major: Major) => {
@@ -130,9 +73,8 @@ export default function ManageMajorsPage() {
     const newErrors = { minScore: "", uktMin: "", uktMax: "" };
     let isValid = true;
 
-    // Validate minScore
     const score = parseFloat(editForm.minScore);
-    if (editForm.minScore === "" || isNaN(score)) {
+    if (editForm.minScore === "" || Number.isNaN(score)) {
       newErrors.minScore = "Nilai wajib diisi";
       isValid = false;
     } else if (score < 0 || score > 100) {
@@ -140,23 +82,20 @@ export default function ManageMajorsPage() {
       isValid = false;
     }
 
-    // Validate UKT Min
     const uktMin = parseFloat(editForm.uktMin);
-    if (editForm.uktMin === "" || isNaN(uktMin) || uktMin < 0) {
+    if (editForm.uktMin === "" || Number.isNaN(uktMin) || uktMin < 0) {
       newErrors.uktMin = "UKT min harus angka positif";
       isValid = false;
     }
 
-    // Validate UKT Max
     const uktMax = parseFloat(editForm.uktMax);
-    if (editForm.uktMax === "" || isNaN(uktMax) || uktMax < 0) {
+    if (editForm.uktMax === "" || Number.isNaN(uktMax) || uktMax < 0) {
       newErrors.uktMax = "UKT max harus angka positif";
       isValid = false;
     }
 
-    // Validate UKT min <= UKT max
-    if (!isNaN(uktMin) && !isNaN(uktMax) && uktMin > uktMax) {
-      newErrors.uktMax = "UKT max harus ≥ UKT min";
+    if (!Number.isNaN(uktMin) && !Number.isNaN(uktMax) && uktMin > uktMax) {
+      newErrors.uktMax = "UKT max harus >= UKT min";
       isValid = false;
     }
 
@@ -195,21 +134,18 @@ export default function ManageMajorsPage() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(value);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F0E7FF] via-[#E7F5FF] to-[#FFE7F0] relative overflow-hidden">
-      {/* Floating Blobs Background */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-[#C8B6FF]/30 to-[#FFC8DD]/30 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-[#BDE0FE]/30 to-[#A0E7E5]/30 rounded-full blur-3xl animate-pulse delay-1000" />
 
-      {/* Success Notification */}
       <AnimatePresence>
         {showSuccess && (
           <motion.div
@@ -229,9 +165,7 @@ export default function ManageMajorsPage() {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
-        {/* Back Button */}
         <motion.div
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -249,7 +183,6 @@ export default function ManageMajorsPage() {
           </Link>
         </motion.div>
 
-        {/* Header Card */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -264,7 +197,6 @@ export default function ManageMajorsPage() {
               <p className="text-sm md:text-base text-gray-600">Manajemen data jurusan sistem</p>
             </div>
 
-            {/* Add Major Button - Android Optimized */}
             <Link to="/admin/add-major" className="w-full sm:w-auto">
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -277,7 +209,6 @@ export default function ManageMajorsPage() {
             </Link>
           </div>
 
-          {/* Search Bar */}
           <div className="relative mt-6">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -290,7 +221,6 @@ export default function ManageMajorsPage() {
           </div>
         </motion.div>
 
-        {/* Majors Table Card */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -301,21 +231,11 @@ export default function ManageMajorsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-4 px-4 font-bold text-gray-800">
-                    Nama Jurusan
-                  </th>
-                  <th className="text-left py-4 px-4 font-bold text-gray-800">
-                    Bidang Keilmuan
-                  </th>
-                  <th className="text-left py-4 px-4 font-bold text-gray-800">
-                    Nilai Minimal
-                  </th>
-                  <th className="text-left py-4 px-4 font-bold text-gray-800">
-                    Rentang UKT
-                  </th>
-                  <th className="text-center py-4 px-4 font-bold text-gray-800">
-                    Aksi
-                  </th>
+                  <th className="text-left py-4 px-4 font-bold text-gray-800">Nama Jurusan</th>
+                  <th className="text-left py-4 px-4 font-bold text-gray-800">Bidang Keilmuan</th>
+                  <th className="text-left py-4 px-4 font-bold text-gray-800">Nilai Minimal</th>
+                  <th className="text-left py-4 px-4 font-bold text-gray-800">Rentang UKT</th>
+                  <th className="text-center py-4 px-4 font-bold text-gray-800">Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -336,23 +256,19 @@ export default function ManageMajorsPage() {
                     >
                       {editingId === major.id ? (
                         <>
-                          {/* Edit Mode */}
                           <td className="py-4 px-4">
                             <input
                               type="text"
                               value={editForm.name}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, name: e.target.value })
-                              }
+                              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                               className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B6FF]"
                             />
+                            <p className="text-xs text-gray-400 mt-1">Slug: {major.slug}</p>
                           </td>
                           <td className="py-4 px-4">
                             <select
                               value={editForm.field}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, field: e.target.value })
-                              }
+                              onChange={(e) => setEditForm({ ...editForm, field: e.target.value })}
                               className="w-full px-3 py-2 bg-white/50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B6FF]"
                             >
                               <option value="Saintek">Saintek</option>
@@ -364,16 +280,9 @@ export default function ManageMajorsPage() {
                               <input
                                 type="number"
                                 value={editForm.minScore}
-                                onChange={(e) =>
-                                  setEditForm({
-                                    ...editForm,
-                                    minScore: e.target.value,
-                                  })
-                                }
+                                onChange={(e) => setEditForm({ ...editForm, minScore: e.target.value })}
                                 className={`w-full px-3 py-2 bg-white/50 border rounded-xl focus:outline-none focus:ring-2 ${
-                                  errors.minScore
-                                    ? "border-red-400 focus:ring-red-400"
-                                    : "border-gray-200 focus:ring-[#C8B6FF]"
+                                  errors.minScore ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-[#C8B6FF]"
                                 }`}
                               />
                               {errors.minScore && (
@@ -390,17 +299,10 @@ export default function ManageMajorsPage() {
                                 <input
                                   type="number"
                                   value={editForm.uktMin}
-                                  onChange={(e) =>
-                                    setEditForm({
-                                      ...editForm,
-                                      uktMin: e.target.value,
-                                    })
-                                  }
+                                  onChange={(e) => setEditForm({ ...editForm, uktMin: e.target.value })}
                                   placeholder="UKT Min"
                                   className={`w-full px-3 py-2 bg-white/50 border rounded-xl focus:outline-none focus:ring-2 text-sm ${
-                                    errors.uktMin
-                                      ? "border-red-400 focus:ring-red-400"
-                                      : "border-gray-200 focus:ring-[#C8B6FF]"
+                                    errors.uktMin ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-[#C8B6FF]"
                                   }`}
                                 />
                                 {errors.uktMin && (
@@ -414,17 +316,10 @@ export default function ManageMajorsPage() {
                                 <input
                                   type="number"
                                   value={editForm.uktMax}
-                                  onChange={(e) =>
-                                    setEditForm({
-                                      ...editForm,
-                                      uktMax: e.target.value,
-                                    })
-                                  }
+                                  onChange={(e) => setEditForm({ ...editForm, uktMax: e.target.value })}
                                   placeholder="UKT Max"
                                   className={`w-full px-3 py-2 bg-white/50 border rounded-xl focus:outline-none focus:ring-2 text-sm ${
-                                    errors.uktMax
-                                      ? "border-red-400 focus:ring-red-400"
-                                      : "border-gray-200 focus:ring-[#C8B6FF]"
+                                    errors.uktMax ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-[#C8B6FF]"
                                   }`}
                                 />
                                 {errors.uktMax && (
@@ -459,9 +354,9 @@ export default function ManageMajorsPage() {
                         </>
                       ) : (
                         <>
-                          {/* View Mode */}
                           <td className="py-4 px-4 font-semibold text-gray-800">
-                            {major.name}
+                            <div>{major.name}</div>
+                            <div className="text-xs text-gray-400 mt-1">{major.slug}</div>
                           </td>
                           <td className="py-4 px-4">
                             <span
@@ -474,18 +369,12 @@ export default function ManageMajorsPage() {
                               {major.field}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-gray-700 font-semibold">
-                            {major.minScore}
-                          </td>
+                          <td className="py-4 px-4 text-gray-700 font-semibold">{major.minScore}</td>
                           <td className="py-4 px-4 text-gray-700">
                             <div className="text-sm">
-                              <div className="font-medium">
-                                {formatCurrency(major.uktMin)}
-                              </div>
+                              <div className="font-medium">{formatCurrency(major.uktMin)}</div>
                               <div className="text-gray-500">s/d</div>
-                              <div className="font-medium">
-                                {formatCurrency(major.uktMax)}
-                              </div>
+                              <div className="font-medium">{formatCurrency(major.uktMax)}</div>
                             </div>
                           </td>
                           <td className="py-4 px-4">
@@ -521,7 +410,6 @@ export default function ManageMajorsPage() {
         </motion.div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div
@@ -541,12 +429,9 @@ export default function ManageMajorsPage() {
               <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800 text-center mb-2">
-                Konfirmasi Hapus
-              </h3>
+              <h3 className="text-xl font-bold text-gray-800 text-center mb-2">Konfirmasi Hapus</h3>
               <p className="text-gray-600 text-center mb-6">
-                Apakah Anda yakin ingin menghapus data jurusan ini? Tindakan ini
-                tidak dapat dibatalkan.
+                Apakah Anda yakin ingin menghapus data jurusan ini? Tindakan ini tidak dapat dibatalkan.
               </p>
               <div className="flex gap-3">
                 <motion.button

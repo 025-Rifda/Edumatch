@@ -55,6 +55,7 @@ def recommend_majors(payload: dict) -> tuple[dict, int]:
     return result_payload, 200
 
 
+
 def calculate_academic_score(academic_scores: dict[str, float]) -> float:
     average_score = mean(float(score) for score in academic_scores.values())
     category = classify_academic_score(average_score)
@@ -66,12 +67,14 @@ def calculate_academic_score(academic_scores: dict[str, float]) -> float:
     return 50.0
 
 
+
 def classify_academic_score(score: float) -> str:
     if score > 85:
         return "high"
     if 70 <= score <= 85:
         return "medium"
     return "low"
+
 
 
 def calculate_interest_score(interest_scores: list[float | int]) -> tuple[float, dict[str, float]]:
@@ -82,8 +85,10 @@ def calculate_interest_score(interest_scores: list[float | int]) -> tuple[float,
     return round(score, 2), membership
 
 
+
 def convert_interest_to_100_scale(score: float) -> float:
     return ((score - 1) / 4) * 100
+
 
 
 def calculate_fuzzy_membership(score_0_to_100: float) -> dict[str, float]:
@@ -110,6 +115,7 @@ def calculate_fuzzy_membership(score_0_to_100: float) -> dict[str, float]:
     }
 
 
+
 def defuzzify_interest(membership: dict[str, float]) -> float:
     numerator = (
         membership["low"] * 30
@@ -122,14 +128,17 @@ def defuzzify_interest(membership: dict[str, float]) -> float:
     return numerator / denominator
 
 
+
 def filter_majors_by_budget(majors: list[dict], budget: int) -> list[dict]:
     return [major for major in majors if int(major["ukt"]) <= budget]
+
 
 
 def calculate_financial_match(major_ukt: int, budget: int) -> float:
     if major_ukt > budget:
         return 0.0
     return round((major_ukt / budget) * 100, 2)
+
 
 
 def rank_majors(
@@ -155,6 +164,7 @@ def rank_majors(
         ranked.append(
             {
                 "id": major["id"],
+                "slug": major.get("slug"),
                 "name": major["name"],
                 "percentage": round(final_score, 2),
                 "match": round(final_score, 2),
@@ -163,6 +173,9 @@ def rank_majors(
                 "financial_match": financial_match,
                 "min_score": float(major["min_score"]),
                 "ukt": int(major["ukt"]),
+                "ukt_min": int(major.get("ukt_min", major["ukt"])),
+                "ukt_max": int(major.get("ukt_max", major["ukt"])),
+                "field": major.get("field"),
             }
         )
 
@@ -170,10 +183,12 @@ def rank_majors(
     return ranked
 
 
+
 def calculate_major_academic_fit(academic_score: float, major_min_score: float) -> float:
     if academic_score >= major_min_score:
         return 100.0
     return round((academic_score / major_min_score) * 100, 2)
+
 
 
 def _validate_academic_scores(academic_scores: object) -> dict | None:
@@ -190,6 +205,7 @@ def _validate_academic_scores(academic_scores: object) -> dict | None:
             return {"error": f"Academic score for '{subject}' must be between 0 and 100."}
 
     return None
+
 
 
 def _validate_interest_scores(interest_scores: object) -> dict | None:
