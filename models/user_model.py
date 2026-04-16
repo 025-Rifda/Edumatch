@@ -32,3 +32,21 @@ def get_user_by_id(user_id: int) -> Optional[dict]:
     row = cursor.fetchone()
     connection.close()
     return dict(row) if row else None
+
+
+def count_users(excluded_emails: set[str] | None = None) -> int:
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    if excluded_emails:
+        placeholders = ", ".join("?" for _ in excluded_emails)
+        cursor.execute(
+            f"SELECT COUNT(*) AS total FROM users WHERE email NOT IN ({placeholders})",
+            tuple(excluded_emails),
+        )
+    else:
+        cursor.execute("SELECT COUNT(*) AS total FROM users")
+
+    total = int(cursor.fetchone()["total"])
+    connection.close()
+    return total

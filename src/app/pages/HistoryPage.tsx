@@ -4,6 +4,11 @@ import { useNavigate } from "react-router";
 import { History, Calendar, TrendingUp, ChevronRight, ArrowLeft, Filter, Search } from "lucide-react";
 import { majors } from "../../data/majors";
 
+type SelectedMajorContext = {
+  id: string;
+  match: number;
+};
+
 type HistoryMajor = {
   id: number;
   slug?: string;
@@ -27,6 +32,23 @@ const formatDate = (value: string) =>
   }).format(new Date(value));
 
 const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
+
+
+const persistSelectedMajorContext = (value: SelectedMajorContext) => {
+  localStorage.setItem("selected_major_context", JSON.stringify(value));
+};
+
+const getMajorIcon = (name: string) => {
+  const normalizedName = name.toLowerCase();
+
+  if (normalizedName.includes("informatika") || normalizedName.includes("komputer")) return "💻";
+  if (normalizedName.includes("sistem informasi") || normalizedName.includes("statistika")) return "📊";
+  if (normalizedName.includes("elektro")) return "⚡";
+  if (normalizedName.includes("matematika")) return "🔢";
+  if (normalizedName.includes("fisika")) return "🔬";
+
+  return "🎓";
+};
 
 export default function HistoryPage() {
   const navigate = useNavigate();
@@ -285,7 +307,10 @@ export default function HistoryPage() {
                               transition={{ delay: majorIndex * 0.05 }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/major/${major.id}`);
+                                persistSelectedMajorContext({ id: major.id, match: major.match });
+                                navigate(`/major/${major.id}`, {
+                                  state: { match: major.match },
+                                });
                               }}
                               className="flex items-center justify-between p-2.5 md:p-3 bg-white/50 rounded-xl md:rounded-[14px] hover:bg-white/70 transition-all cursor-pointer group"
                             >

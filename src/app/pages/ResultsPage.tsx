@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import { majors } from "../../data/majors";
 
+type SelectedMajorContext = {
+  id: string;
+  match: number;
+};
+
 type Recommendation = {
   id: number;
   slug?: string;
@@ -37,6 +42,29 @@ const formatCurrency = (value: number) =>
     minimumFractionDigits: 0,
   }).format(value);
 
+<<<<<<< Updated upstream
+=======
+const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
+
+const persistSelectedMajorContext = (value: SelectedMajorContext) => {
+  localStorage.setItem("selected_major_context", JSON.stringify(value));
+};
+
+const getMajorIcon = (name: string) => {
+  const normalizedName = name.toLowerCase();
+
+  if (normalizedName.includes("informatika") || normalizedName.includes("komputer")) return "💻";
+  if (normalizedName.includes("sistem informasi") || normalizedName.includes("statistika")) return "📊";
+  if (normalizedName.includes("elektro")) return "⚡";
+  if (normalizedName.includes("matematika")) return "🔢";
+  if (normalizedName.includes("fisika")) return "🔬";
+  if (normalizedName.includes("kimia")) return "🧪";
+  if (normalizedName.includes("arsitektur")) return "🏛️";
+
+  return "🎓";
+};
+
+>>>>>>> Stashed changes
 export default function ResultsPage() {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
@@ -175,7 +203,16 @@ export default function ResultsPage() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 + index * 0.1 }}
                 className="relative cursor-pointer"
+<<<<<<< Updated upstream
                 onClick={() => navigate(`/major/${rec.slug}`, { state: { match: rec.match } })}
+=======
+                onClick={() => {
+                  persistSelectedMajorContext({ id: rec.id, match: rec.match });
+                  navigate(`/major/${rec.id}`, {
+                    state: { match: rec.match },
+                  });
+                }}
+>>>>>>> Stashed changes
                 whileHover={{ y: -5 }}
               >
                 {index === 0 && (
@@ -327,11 +364,20 @@ export default function ResultsPage() {
             <div className="space-y-2 md:space-y-3">
               {allRecommendations.slice(0, showAll ? 10 : 5).map((rec, index) => (
                 <motion.div
-                  key={rec.rank}
+                key={rec.rank}
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.8 + index * 0.05 }}
+<<<<<<< Updated upstream
                   onClick={() => navigate(`/major/${rec.slug}`, { state: { match: rec.match } })}
+=======
+                  onClick={() => {
+                    persistSelectedMajorContext({ id: rec.id, match: rec.match });
+                    navigate(`/major/${rec.id}`, {
+                      state: { match: rec.match },
+                    });
+                  }}
+>>>>>>> Stashed changes
                   className="flex items-center justify-between p-3 md:p-4 bg-white/50 rounded-xl md:rounded-[16px] hover:bg-white/70 transition-all duration-200 group cursor-pointer gap-2"
                 >
                   <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">

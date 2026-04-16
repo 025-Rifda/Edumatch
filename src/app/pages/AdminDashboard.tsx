@@ -16,6 +16,10 @@ export default function AdminDashboard() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  const formatTotal = (value: number) =>
+    new Intl.NumberFormat("id-ID").format(value);
 
   // Detect mobile screen
   useEffect(() => {
@@ -34,17 +38,36 @@ export default function AdminDashboard() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  useEffect(() => {
+    const fetchAdminStats = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/admin/stats");
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Gagal mengambil statistik admin");
+        }
+
+        setTotalUsers(Number(data.total_users ?? 0));
+      } catch {
+        setTotalUsers(0);
+      }
+    };
+
+    void fetchAdminStats();
+  }, []);
+
   const stats = [
     {
       label: "Total Pengguna",
-      value: "2,847",
+      value: formatTotal(totalUsers),
       icon: Users,
       gradient: "from-[#C8B6FF] to-[#FFC8DD]",
       delay: 0.1,
     },
     {
       label: "Total Jurusan",
-      value: "156",
+      value: "20",
       icon: GraduationCap,
       gradient: "from-[#BDE0FE] to-[#A0E7E5]",
       delay: 0.2,
