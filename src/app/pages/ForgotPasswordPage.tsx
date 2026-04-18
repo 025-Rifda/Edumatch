@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { Mail, ArrowLeft, GraduationCap, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function ForgotPasswordPage() {

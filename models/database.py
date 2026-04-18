@@ -35,7 +35,8 @@ def initialize_database() -> None:
             name TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
-            jurusan TEXT NOT NULL DEFAULT 'IPA'
+            jurusan TEXT NOT NULL DEFAULT 'IPA',
+            is_active INTEGER NOT NULL DEFAULT 1
         )
         """
     )
@@ -44,6 +45,8 @@ def initialize_database() -> None:
     user_columns = {column["name"] for column in cursor.fetchall()}
     if "jurusan" not in user_columns:
         cursor.execute("ALTER TABLE users ADD COLUMN jurusan TEXT NOT NULL DEFAULT 'IPA'")
+    if "is_active" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
 
     cursor.execute(
         """

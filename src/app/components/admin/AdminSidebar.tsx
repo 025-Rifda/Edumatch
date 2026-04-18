@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
 import { LayoutDashboard, BookOpen, DollarSign, LogOut, Menu, ChevronLeft } from "lucide-react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 interface AdminSidebarProps {
   activeMenu: string;

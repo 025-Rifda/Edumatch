@@ -1,5 +1,5 @@
 // Routes configuration
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 import SplashScreen from "./pages/SplashScreen";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";

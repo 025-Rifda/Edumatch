@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { Home, AlertCircle } from "lucide-react";
 
 export default function NotFoundPage() {

@@ -28,11 +28,13 @@ def create_app() -> Flask:
                 "available_endpoints": [
                     "POST /register",
                     "POST /login",
-                    "POST /recommend",
-                    "GET /history?user_id=<id>",
-                    "POST /admin/major",
-                    "PUT /admin/major",
-                    "DELETE /admin/major",
+                "POST /recommend",
+                "GET /history?user_id=<id>",
+                "GET /admin/stats",
+                "GET /api/admin/users/stats",
+                "POST /admin/major",
+                "PUT /admin/major",
+                "DELETE /admin/major",
                 ],
             }
         )

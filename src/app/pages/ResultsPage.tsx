@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
   CheckCircle,
@@ -41,9 +41,6 @@ const formatCurrency = (value: number) =>
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(value);
-
-<<<<<<< Updated upstream
-=======
 const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
 
 const persistSelectedMajorContext = (value: SelectedMajorContext) => {
@@ -64,7 +61,6 @@ const getMajorIcon = (name: string) => {
   return "🎓";
 };
 
->>>>>>> Stashed changes
 export default function ResultsPage() {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
@@ -203,16 +199,12 @@ export default function ResultsPage() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 + index * 0.1 }}
                 className="relative cursor-pointer"
-<<<<<<< Updated upstream
-                onClick={() => navigate(`/major/${rec.slug}`, { state: { match: rec.match } })}
-=======
-                onClick={() => {
-                  persistSelectedMajorContext({ id: rec.id, match: rec.match });
-                  navigate(`/major/${rec.id}`, {
-                    state: { match: rec.match },
-                  });
-                }}
->>>>>>> Stashed changes
+               onClick={() => {
+  persistSelectedMajorContext({ id: rec.slug, match: rec.match });
+  navigate(`/major/${rec.slug}`, {
+    state: { match: rec.match },
+  });
+}}
                 whileHover={{ y: -5 }}
               >
                 {index === 0 && (
@@ -368,16 +360,12 @@ export default function ResultsPage() {
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.8 + index * 0.05 }}
-<<<<<<< Updated upstream
-                  onClick={() => navigate(`/major/${rec.slug}`, { state: { match: rec.match } })}
-=======
                   onClick={() => {
-                    persistSelectedMajorContext({ id: rec.id, match: rec.match });
-                    navigate(`/major/${rec.id}`, {
+                    persistSelectedMajorContext({ id: rec.slug, match: rec.match });
+                    navigate(`/major/${rec.slug}`, {
                       state: { match: rec.match },
                     });
                   }}
->>>>>>> Stashed changes
                   className="flex items-center justify-between p-3 md:p-4 bg-white/50 rounded-xl md:rounded-[16px] hover:bg-white/70 transition-all duration-200 group cursor-pointer gap-2"
                 >
                   <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">

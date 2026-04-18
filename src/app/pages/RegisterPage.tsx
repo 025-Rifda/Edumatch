@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, User, GraduationCap, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function RegisterPage() {

@@ -10,7 +10,7 @@ import {
   Plus,
   ArrowLeft,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { majorEntries } from "../../data/majors";
 
 interface Major {

@@ -8,7 +8,7 @@ import {
   Check,
   AlertCircle,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 interface FormData {
   name: string;

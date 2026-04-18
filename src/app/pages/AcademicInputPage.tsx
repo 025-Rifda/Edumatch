@@ -1,26 +1,108 @@
 import { motion } from "motion/react";
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BookOpen, Calculator, Globe, Microscope, DollarSign, Users, ArrowRight, ArrowLeft } from "lucide-react";
+
+type Jurusan = "IPA" | "IPS";
+
+type SubjectConfig = {
+  key: string;
+  label: string;
+  icon: typeof BookOpen;
+  color: string;
+};
+
+const COMMON_SUBJECTS: SubjectConfig[] = [
+  { key: "matematika", label: "Matematika", icon: Calculator, color: "from-[#C8B6FF] to-[#FFC8DD]" },
+  { key: "indonesia", label: "Bahasa Indonesia", icon: BookOpen, color: "from-[#FFC8DD] to-[#FFAFCC]" },
+  { key: "inggris", label: "Bahasa Inggris", icon: Globe, color: "from-[#A0E7E5] to-[#BDE0FE]" },
+];
+
+const MAJOR_SUBJECTS: Record<Jurusan, SubjectConfig[]> = {
+  IPA: [
+    { key: "fisika", label: "Fisika", icon: Microscope, color: "from-[#BDE0FE] to-[#C8B6FF]" },
+    { key: "kimia", label: "Kimia", icon: DollarSign, color: "from-[#FFAFCC] to-[#FFC8DD]" },
+    { key: "biologi", label: "Biologi", icon: Users, color: "from-[#A0E7E5] to-[#C8B6FF]" },
+  ],
+  IPS: [
+    { key: "geografi", label: "Geografi", icon: Globe, color: "from-[#BDE0FE] to-[#C8B6FF]" },
+    { key: "sosiologi", label: "Sosiologi", icon: Users, color: "from-[#FFAFCC] to-[#FFC8DD]" },
+    { key: "ekonomi", label: "Ekonomi", icon: DollarSign, color: "from-[#A0E7E5] to-[#C8B6FF]" },
+  ],
+};
+
+const normalizeJurusan = (value: unknown): Jurusan | null => {
+  const normalizedValue = String(value ?? "").trim().toUpperCase();
+  if (normalizedValue === "IPA" || normalizedValue === "IPS") {
+    return normalizedValue;
+  }
+
+  return null;
+};
+
+const getStoredUserJurusan = (): Jurusan | null => {
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (!rawUser) {
+      return null;
+    }
+
+    const parsedUser = JSON.parse(rawUser);
+    return normalizeJurusan(parsedUser?.jurusan);
+  } catch {
+    return null;
+  }
+};
+
+const buildInitialScores = (jurusan: Jurusan | null) => {
+  const validJurusan = jurusan ?? "IPA";
+  const activeSubjects = [...COMMON_SUBJECTS, ...MAJOR_SUBJECTS[validJurusan]];
+
+  let storedScores: Record<string, unknown> = {};
+  try {
+    storedScores = JSON.parse(localStorage.getItem("academic_scores") || "{}");
+  } catch {
+    storedScores = {};
+  }
+
+  return activeSubjects.reduce<Record<string, string>>((accumulator, subject) => {
+    const rawValue = storedScores[subject.key];
+    accumulator[subject.key] = typeof rawValue === "number" || typeof rawValue === "string"
+      ? String(rawValue)
+      : "";
+    return accumulator;
+  }, {});
+};
 
 export default function AcademicInputPage() {
   const navigate = useNavigate();
-  const [scores, setScores] = useState({
-    matematika: "",
-    indonesia: "",
-    inggris: "",
-    fisika: "",
-    kimia: "",
-    biologi: "",
-  });
-
+  const [userJurusan] = useState<Jurusan | null>(() => getStoredUserJurusan());
+  const [scores, setScores] = useState<Record<string, string>>(() => buildInitialScores(getStoredUserJurusan()));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!userJurusan) {
+      navigate("/login");
+    }
+  }, [navigate, userJurusan]);
+
+  const selectedJurusan = userJurusan ?? "IPA";
+  const subjectGroups = [
+    {
+      title: "Mata Pelajaran Umum",
+      subjects: COMMON_SUBJECTS,
+    },
+    {
+      title: `Mata Pelajaran Jurusan ${selectedJurusan}`,
+      subjects: MAJOR_SUBJECTS[selectedJurusan],
+    },
+  ];
 
   const handleChange = (field: string, value: string) => {
     const numValue = parseInt(value);
     if (value === "" || (numValue >= 0 && numValue <= 100)) {
-      setScores({ ...scores, [field]: value });
-      setErrors({ ...errors, [field]: false });
+      setScores((previousScores) => ({ ...previousScores, [field]: value }));
+      setErrors((previousErrors) => ({ ...previousErrors, [field]: false }));
     }
   };
 
@@ -35,39 +117,22 @@ export default function AcademicInputPage() {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
     } else {
-      localStorage.setItem(
-        "academic_scores",
-        JSON.stringify({
-          matematika: Number(scores.matematika),
-          indonesia: Number(scores.indonesia),
-          inggris: Number(scores.inggris),
-          fisika: Number(scores.fisika),
-          kimia: Number(scores.kimia),
-          biologi: Number(scores.biologi),
-        }),
+      const normalizedScores = Object.entries(scores).reduce<Record<string, number>>(
+        (accumulator, [key, value]) => {
+          accumulator[key] = Number(value);
+          return accumulator;
+        },
+        {},
       );
+
+      localStorage.setItem("academic_scores", JSON.stringify(normalizedScores));
       navigate("/analysis/step2");
     }
   };
 
-  const subjectGroups = [
-    {
-      title: "Mata Pelajaran Umum",
-      subjects: [
-        { key: "matematika", label: "Matematika", icon: Calculator, color: "from-[#C8B6FF] to-[#FFC8DD]" },
-        { key: "indonesia", label: "Bahasa Indonesia", icon: BookOpen, color: "from-[#FFC8DD] to-[#FFAFCC]" },
-        { key: "inggris", label: "Bahasa Inggris", icon: Globe, color: "from-[#A0E7E5] to-[#BDE0FE]" },
-      ],
-    },
-    {
-      title: "Mata Pelajaran Jurusan IPA",
-      subjects: [
-        { key: "fisika", label: "Fisika", icon: Microscope, color: "from-[#BDE0FE] to-[#C8B6FF]" },
-        { key: "kimia", label: "Kimia", icon: DollarSign, color: "from-[#FFAFCC] to-[#FFC8DD]" },
-        { key: "biologi", label: "Biologi", icon: Users, color: "from-[#A0E7E5] to-[#C8B6FF]" },
-      ],
-    },
-  ];
+  if (!userJurusan) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
@@ -125,7 +190,7 @@ export default function AcademicInputPage() {
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[#A0E7E5]/20 rounded-full">
                 <div className="w-2 h-2 rounded-full bg-[#A0E7E5]" />
                 <p className="text-sm text-[#2B2D42]/70">
-                  Nilai ini akan mempengaruhi hasil rekomendasi
+                  Jurusan terdeteksi: {selectedJurusan}. Nilai ini akan mempengaruhi hasil rekomendasi.
                 </p>
               </div>
             </motion.div>

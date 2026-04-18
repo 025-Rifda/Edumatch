@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Wallet, Info } from "lucide-react";
 
 export default function BudgetInputPage() {

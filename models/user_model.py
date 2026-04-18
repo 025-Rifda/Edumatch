@@ -50,3 +50,32 @@ def count_users(excluded_emails: set[str] | None = None) -> int:
     total = int(cursor.fetchone()["total"])
     connection.close()
     return total
+
+
+def get_user_stats(excluded_emails: set[str] | None = None) -> dict[str, int]:
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    base_query = """
+        SELECT
+            COUNT(*) AS total_users,
+            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active_users,
+            SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) AS inactive_users
+        FROM users
+    """
+
+    params: tuple[str, ...] = ()
+    if excluded_emails:
+        placeholders = ", ".join("?" for _ in excluded_emails)
+        base_query += f" WHERE email NOT IN ({placeholders})"
+        params = tuple(excluded_emails)
+
+    cursor.execute(base_query, params)
+    row = cursor.fetchone()
+    connection.close()
+
+    return {
+        "totalUsers": int(row["total_users"] or 0),
+        "activeUsers": int(row["active_users"] or 0),
+        "inactiveUsers": int(row["inactive_users"] or 0),
+    }

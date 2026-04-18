@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { GraduationCap } from "lucide-react";
 
 export default function SplashScreen() {

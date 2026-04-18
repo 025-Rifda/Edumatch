@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { History, Calendar, TrendingUp, ChevronRight, ArrowLeft, Filter, Search } from "lucide-react";
 import { majors } from "../../data/majors";
 
