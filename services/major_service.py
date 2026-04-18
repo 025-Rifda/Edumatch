@@ -1,7 +1,7 @@
 import sqlite3
 
 from models.major_catalog import slugify_major_name
-from models.major_model import create_major, delete_major, get_major_by_id, update_major
+from models.major_model import create_major, delete_major, get_major_by_id, get_major_by_slug, update_major
 
 
 def _validate_major_payload(payload: dict, require_id: bool = False) -> tuple[dict, int] | None:
@@ -140,3 +140,15 @@ def remove_major(payload: dict) -> tuple[dict, int]:
 
     delete_major(major_id)
     return {"message": "Major deleted successfully.", "deleted_id": major_id}, 200
+
+
+def get_major_detail_service(major_slug: str) -> tuple[dict, int]:
+    slug = str(major_slug).strip().lower()
+    if not slug:
+        return {"error": "major slug is required."}, 400
+
+    major = get_major_by_slug(slug)
+    if major is None:
+        return {"error": "Major not found."}, 404
+
+    return {"major": major}, 200

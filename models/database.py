@@ -4,6 +4,7 @@ from pathlib import Path
 from werkzeug.security import generate_password_hash
 
 from models.major_catalog import DEFAULT_MAJORS
+from models.result_hash import build_result_hash
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,9 +81,23 @@ def initialize_database() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             result_json TEXT NOT NULL,
+            result_hash TEXT,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
+        """
+    )
+
+    cursor.execute("PRAGMA table_info(results)")
+    result_columns = {column["name"] for column in cursor.fetchall()}
+    if "result_hash" not in result_columns:
+        cursor.execute("ALTER TABLE results ADD COLUMN result_hash TEXT")
+
+    _sync_result_hashes(cursor)
+    cursor.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_results_user_hash
+        ON results (user_id, result_hash)
         """
     )
 
@@ -155,3 +170,31 @@ def _sync_default_majors(cursor: sqlite3.Cursor) -> None:
                     existing["id"],
                 ),
             )
+
+
+def _sync_result_hashes(cursor: sqlite3.Cursor) -> None:
+    cursor.execute(
+        """
+        SELECT id, user_id, result_json, result_hash
+        FROM results
+        ORDER BY id DESC
+        """
+    )
+    rows = [dict(row) for row in cursor.fetchall()]
+    seen_keys: set[tuple[int, str]] = set()
+
+    for row in rows:
+        result_hash = row.get("result_hash") or build_result_hash(row["result_json"])
+
+        if row.get("result_hash") != result_hash:
+            cursor.execute(
+                "UPDATE results SET result_hash = ? WHERE id = ?",
+                (result_hash, row["id"]),
+            )
+
+        dedupe_key = (int(row["user_id"]), result_hash)
+        if dedupe_key in seen_keys:
+            cursor.execute("DELETE FROM results WHERE id = ?", (row["id"],))
+            continue
+
+        seen_keys.add(dedupe_key)

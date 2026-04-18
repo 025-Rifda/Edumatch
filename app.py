@@ -29,6 +29,7 @@ def create_app() -> Flask:
                     "POST /register",
                     "POST /login",
                 "POST /recommend",
+                "GET /api/majors/<slug>",
                 "GET /history?user_id=<id>",
                 "GET /admin/stats",
                 "GET /api/admin/users/stats",

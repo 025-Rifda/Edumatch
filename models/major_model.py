@@ -21,6 +21,15 @@ def get_major_by_id(major_id: int) -> Optional[dict]:
     return dict(row) if row else None
 
 
+def get_major_by_slug(slug: str) -> Optional[dict]:
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM majors WHERE slug = ?", (slug,))
+    row = cursor.fetchone()
+    connection.close()
+    return dict(row) if row else None
+
+
 def create_major(
     slug: str,
     name: str,

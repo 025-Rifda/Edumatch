@@ -1,7 +1,15 @@
 import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { History, Calendar, TrendingUp, ChevronRight, ArrowLeft, Filter, Search } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronRight,
+  Filter,
+  History,
+  Search,
+  TrendingUp,
+} from "lucide-react";
 import { majors } from "../../data/majors";
 
 type SelectedMajorContext = {
@@ -31,23 +39,8 @@ const formatDate = (value: string) =>
     year: "numeric",
   }).format(new Date(value));
 
-const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
-
-
 const persistSelectedMajorContext = (value: SelectedMajorContext) => {
   localStorage.setItem("selected_major_context", JSON.stringify(value));
-};
-
-const getMajorIcon = (name: string) => {
-  const normalizedName = name.toLowerCase();
-
-  if (normalizedName.includes("informatika") || normalizedName.includes("komputer")) return "💻";
-  if (normalizedName.includes("sistem informasi") || normalizedName.includes("statistika")) return "📊";
-  if (normalizedName.includes("elektro")) return "⚡";
-  if (normalizedName.includes("matematika")) return "🔢";
-  if (normalizedName.includes("fisika")) return "🔬";
-
-  return "🎓";
 };
 
 export default function HistoryPage() {
@@ -97,15 +90,15 @@ export default function HistoryPage() {
       rawDate: item.created_at,
       topMajor: item.top_major?.name ?? "-",
       match: Math.round(item.top_major?.match ?? item.top_major?.percentage ?? 0),
-      majors: (item.top10 ?? []).slice(0, 5).map((major) => {
-        const slug = major.slug ?? slugify(major.name);
+      majors: (item.top10 ?? []).slice(0, 10).map((major) => {
+        const slug = major.slug ?? "";
         const majorData = majors[slug];
 
         return {
-          id: slug,
+          slug,
           name: majorData?.name ?? major.name,
           match: Math.round(major.match ?? major.percentage ?? 0),
-          icon: majorData?.icon ?? "??",
+          icon: majorData?.icon ?? "🎓",
         };
       }),
     }));
@@ -296,19 +289,19 @@ export default function HistoryPage() {
                       >
                         <h4 className="text-sm md:text-lg font-semibold text-[#2B2D42] mb-3 md:mb-4 flex items-center gap-2">
                           <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-[#C8B6FF]" />
-                          Top 5 Rekomendasi Jurusan
+                          Top 10 Rekomendasi Jurusan
                         </h4>
                         <div className="space-y-2">
                           {item.majors.map((major, majorIndex) => (
                             <motion.div
-                              key={major.id}
+                              key={`${item.id}-${major.slug}-${majorIndex}`}
                               initial={{ x: -20, opacity: 0 }}
                               animate={{ x: 0, opacity: 1 }}
                               transition={{ delay: majorIndex * 0.05 }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                persistSelectedMajorContext({ id: major.id, match: major.match });
-                                navigate(`/major/${major.id}`, {
+                                persistSelectedMajorContext({ id: major.slug, match: major.match });
+                                navigate(`/major/${major.slug}`, {
                                   state: { match: major.match },
                                 });
                               }}
