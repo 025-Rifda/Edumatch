@@ -1,1 +1,1 @@
-# TODO: Implement Admin Majors Endpoint\n\n## Steps:\n1. [x] Edit services/admin_dashboard_services.py - Add get_all_majors() function\n2. [x] Edit routes/admin_routes.py - Add /admin/majors GET endpoint\n3. [ ] Test the endpoint\n4. [ ] Mark complete
+1. [x] Create TODO.md

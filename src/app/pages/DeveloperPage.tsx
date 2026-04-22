@@ -1,3 +1,4 @@
+
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -130,9 +131,9 @@ export default function DeveloperPage() {
             >
               <div className="w-48 h-48 rounded-full overflow-hidden ring-8 ring-white/50 shadow-2xl">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1600896997793-b8ed3459a17f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBkZXZlbG9wZXIlMjBwb3J0cmFpdCUyMGhlYWRzaG90fGVufDF8fHx8MTc3NTQ5NDc3M3ww&ixlib=rb-4.1.0&q=80&w=1080"
-                  alt="Developer"
-                  className="w-full h-full object-cover"
+src="/foto-developer.jpeg"
+                alt="Developer"
+                className="w-full h-full object-cover"
                 />
               </div>
               {/* Verified Badge */}
@@ -154,12 +155,12 @@ export default function DeveloperPage() {
                 transition={{ delay: 0.3 }}
               >
                 <h2 className="text-3xl font-bold text-[#2B2D42] mb-2">
-                  Alex Kurniawan
+                  Kelompok 3
                 </h2>
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#C8B6FF] to-[#FFC8DD] text-white rounded-full mb-4 shadow-lg">
                   <Code className="w-4 h-4" />
                   <span className="font-medium">
-                    UI/UX Designer & Developer
+                    2024I Teknik Informatika
                   </span>
                 </div>
                 <p className="text-[#2B2D42]/80 leading-relaxed mb-4 max-w-xl">
@@ -170,7 +171,7 @@ export default function DeveloperPage() {
                 </p>
                 <div className="flex items-center justify-center md:justify-start gap-2 text-[#2B2D42]/70">
                   <GraduationCap className="w-5 h-5" />
-                  <span>Universitas Indonesia • Informatika</span>
+                  <span>Universitas Negeri Surabaya  • Teknik Informatika</span>
                 </div>
               </motion.div>
             </div>
