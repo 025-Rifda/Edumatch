@@ -30,6 +30,9 @@ type Recommendation = {
   ukt_min?: number;
   ukt_max?: number;
   is_budget_safe?: boolean;
+  is_affordable?: boolean;
+  sesuai_ukt?: boolean;
+  ukt_status?: string;
   reasons?: string[];
 };
 
@@ -39,6 +42,8 @@ type RecommendationMeta = {
   strict_budget_match_count: number;
   used_budget_fallback: boolean;
   budget_message: string | null;
+  affordable_major_count?: number;
+  unaffordable_major_count?: number;
 };
 
 type RecommendationResponse = {
@@ -208,16 +213,23 @@ export default function ResultsPage() {
       reasons: rec.reasons ?? [],
       careerProspects: majorData?.careerProspects ?? [],
       ukt: formatUktRange(rec.ukt_min, rec.ukt_max ?? rec.ukt),
-      isBudgetSafe: rec.is_budget_safe ?? true,
+      isBudgetSafe: rec.is_affordable ?? rec.sesuai_ukt ?? rec.is_budget_safe ?? true,
+      uktStatus: rec.ukt_status ?? ((rec.is_affordable ?? rec.sesuai_ukt ?? rec.is_budget_safe ?? true) ? "Sesuai UKT" : "Di luar UKT"),
     };
   });
 
-  const allRecommendations = recommendations.top10.map((rec, index) => ({
-    rank: index + 1,
-    slug: rec.slug ?? "",
-    name: majors[rec.slug ?? ""]?.name ?? rec.name ?? "Data jurusan tidak ditemukan",
-    match: Math.round(rec.match ?? rec.percentage ?? 0),
-  }));
+  const allRecommendations = recommendations.top10.map((rec, index) => {
+    const isAffordable = rec.is_affordable ?? rec.sesuai_ukt ?? rec.is_budget_safe ?? true;
+
+    return {
+      rank: index + 1,
+      slug: rec.slug ?? "",
+      name: majors[rec.slug ?? ""]?.name ?? rec.name ?? "Data jurusan tidak ditemukan",
+      match: Math.round(rec.match ?? rec.percentage ?? 0),
+      isAffordable,
+      uktStatus: rec.ukt_status ?? (isAffordable ? "Sesuai UKT" : "Di luar UKT"),
+    };
+  });
 
   const topPick = topRecommendations[0];
 
@@ -253,6 +265,11 @@ export default function ResultsPage() {
             <p className="text-[#2B2D42]/70 text-sm md:text-lg px-4">
               Berdasarkan data yang kamu berikan, berikut rekomendasi terbaik untukmu
             </p>
+            {recommendations.meta && (
+              <p className="mt-2 text-xs md:text-sm text-[#2B2D42]/60 px-4">
+                Menampilkan {Math.min(recommendations.top10.length, 10)} dari {recommendations.meta.total_ranked} jurusan hasil ranking. Jurusan di luar budget tetap ditampilkan dengan penanda khusus.
+              </p>
+            )}
           </motion.div>
 
           {(recommendations.meta?.budget_message || fetchError) && (
@@ -338,8 +355,8 @@ export default function ResultsPage() {
                     </div>
 
                     {!rec.isBudgetSafe && (
-                      <div className="mb-4 rounded-xl bg-[#FFF1F2] px-3 py-2 text-[11px] md:text-xs text-[#9F1239]">
-                        Budgetmu masih di bawah UKT minimum, jadi ini ditampilkan sebagai opsi terdekat.
+                      <div className="mb-4 rounded-xl border border-[#FCA5A5] bg-[#FFF1F2] px-3 py-2 text-[11px] md:text-xs text-[#9F1239]">
+                        <span className="font-semibold">{rec.uktStatus}.</span> Budgetmu masih di bawah UKT minimum, tetapi jurusan ini tetap masuk ranking.
                       </div>
                     )}
 
@@ -462,7 +479,11 @@ export default function ResultsPage() {
                         state: { match: rec.match },
                       });
                     }}
-                    className="flex items-center justify-between p-3 md:p-4 bg-white/50 rounded-xl md:rounded-[16px] hover:bg-white/70 transition-all duration-200 group cursor-pointer gap-2"
+                    className={`flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-[16px] transition-all duration-200 group cursor-pointer gap-2 border ${
+                      rec.isAffordable
+                        ? "bg-white/50 border-transparent hover:bg-white/70"
+                        : "bg-[#FFF1F2]/80 border-[#FECDD3] hover:bg-[#FFE4E6]"
+                    }`}
                   >
                     <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
                       <div
@@ -474,18 +495,33 @@ export default function ResultsPage() {
                       >
                         {rec.rank}
                       </div>
-                      <span className="font-medium text-xs md:text-base text-[#2B2D42] truncate">{rec.name}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="font-medium text-xs md:text-base text-[#2B2D42] truncate block">{rec.name}</span>
+                        {!rec.isAffordable && (
+                          <span className="inline-flex mt-1 rounded-full bg-[#FEE2E2] px-2 py-0.5 text-[10px] md:text-xs font-semibold text-[#B91C1C]">
+                            {rec.uktStatus}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
                       <div className="hidden sm:block w-24 md:w-48 h-1.5 md:h-2 bg-[#2B2D42]/10 rounded-full overflow-hidden">
                         <motion.div
-                          className="h-full bg-gradient-to-r from-[#C8B6FF] to-[#FFC8DD] rounded-full"
+                          className={`h-full rounded-full ${
+                            rec.isAffordable
+                              ? "bg-gradient-to-r from-[#C8B6FF] to-[#FFC8DD]"
+                              : "bg-gradient-to-r from-[#FB7185] to-[#F97316]"
+                          }`}
                           initial={{ width: 0 }}
                           animate={{ width: `${rec.match}%` }}
                           transition={{ duration: 1, delay: 0.8 + index * 0.05 }}
                         />
                       </div>
-                      <span className="font-semibold text-sm md:text-base text-[#C8B6FF] min-w-[45px] md:min-w-[50px] text-right">
+                      <span
+                        className={`font-semibold text-sm md:text-base min-w-[45px] md:min-w-[50px] text-right ${
+                          rec.isAffordable ? "text-[#C8B6FF]" : "text-[#DC2626]"
+                        }`}
+                      >
                         {rec.match}%
                       </span>
                       <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-[#2B2D42]/30 group-hover:text-[#C8B6FF] group-hover:translate-x-1 transition-all" />

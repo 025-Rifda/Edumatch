@@ -211,7 +211,7 @@ def recommend_majors(payload: dict) -> tuple[dict, int]:
     interest_profile = calculate_interest_profile(interest_scores)
     overall_interest_score, _ = calculate_interest_score(interest_scores)
     all_majors = get_all_majors()
-    eligible_majors, budget_metadata = filter_majors_by_budget(all_majors, budget)
+    budget_metadata = summarize_budget_status(all_majors, budget)
 
     print(
         "[recommend_majors] Validation passed.",
@@ -222,13 +222,13 @@ def recommend_majors(payload: dict) -> tuple[dict, int]:
             "interest_dimensions": interest_profile,
             "overall_interest_score": overall_interest_score,
             "strict_budget_match_count": budget_metadata["strict_budget_match_count"],
-            "eligible_majors_count": len(eligible_majors),
+            "eligible_majors_count": len(all_majors),
             "used_budget_fallback": budget_metadata["used_budget_fallback"],
         },
     )
 
     ranked_majors = rank_majors(
-        majors=eligible_majors,
+        majors=all_majors,
         academic_scores=normalized_academic_scores,
         interest_profile=interest_profile,
         overall_interest_score=overall_interest_score,
@@ -323,49 +323,48 @@ def defuzzify_interest(membership: dict[str, float]) -> float:
     return numerator / denominator
 
 
-def filter_majors_by_budget(majors: list[dict], budget: int) -> tuple[list[dict], dict]:
-    strict_matches = [
+def summarize_budget_status(majors: list[dict], budget: int) -> dict:
+    affordable_majors = [
         major
         for major in majors
         if int(major.get("ukt_min", major["ukt"])) <= budget
     ]
 
-    if strict_matches:
+    if affordable_majors:
         print(
-            "[filter_majors_by_budget] Strict budget matches found.",
+            "[summarize_budget_status] Affordable majors found.",
             {
                 "budget": budget,
-                "count": len(strict_matches),
+                "count": len(affordable_majors),
             },
         )
-        return strict_matches, {
-            "strict_budget_match_count": len(strict_matches),
+        return {
+            "strict_budget_match_count": len(affordable_majors),
             "used_budget_fallback": False,
             "budget_message": None,
+            "affordable_major_count": len(affordable_majors),
+            "unaffordable_major_count": max(0, len(majors) - len(affordable_majors)),
         }
 
-    fallback_candidates = sorted(
-        majors,
-        key=lambda major: (
-            int(major.get("ukt_min", major["ukt"])),
-            int(major.get("ukt_max", major["ukt"])),
-            str(major["name"]),
-        ),
-    )[:10]
-
     print(
-        "[filter_majors_by_budget] No strict budget matches. Using fallback candidates.",
+        "[summarize_budget_status] No affordable majors found.",
         {
             "budget": budget,
-            "fallback_count": len(fallback_candidates),
-            "fallback_slugs": [major.get("slug") for major in fallback_candidates],
+            "major_count": len(majors),
         },
     )
-    return fallback_candidates, {
+    return {
         "strict_budget_match_count": 0,
         "used_budget_fallback": True,
-        "budget_message": "Tidak ada jurusan yang seluruh rentang UKT-nya masuk ke budgetmu. Sistem menampilkan opsi terdekat berdasarkan UKT minimum paling rendah.",
+        "budget_message": "Tidak ada jurusan yang sesuai UKT pada budget ini. Sistem tetap menampilkan ranking Top 10 terbaik dan menandai jurusan yang berada di luar UKT.",
+        "affordable_major_count": 0,
+        "unaffordable_major_count": len(majors),
     }
+
+
+def get_ukt_status(major_ukt_min: int, budget: int) -> tuple[bool, str]:
+    is_affordable = budget >= major_ukt_min
+    return is_affordable, "Sesuai UKT" if is_affordable else "Di luar UKT"
 
 
 def calculate_financial_match(major_ukt_min: int, major_ukt_max: int, budget: int) -> float:
@@ -394,6 +393,7 @@ def rank_majors(
         field = major.get("field", "Soshum")
         major_ukt_min = int(major.get("ukt_min", major["ukt"]))
         major_ukt_max = int(major.get("ukt_max", major["ukt"]))
+        is_affordable, ukt_status = get_ukt_status(major_ukt_min, budget)
 
         financial_match = calculate_financial_match(major_ukt_min, major_ukt_max, budget)
         major_interest_fit = calculate_major_interest_fit(
@@ -440,7 +440,10 @@ def rank_majors(
                 "field": field,
                 "confidence": confidence,
                 "is_cross_track": is_cross_track,
-                "is_budget_safe": budget >= major_ukt_min,
+                "is_budget_safe": is_affordable,
+                "is_affordable": is_affordable,
+                "sesuai_ukt": is_affordable,
+                "ukt_status": ukt_status,
                 "reasons": build_recommendation_reasons(
                     major=major,
                     profile=profile,
