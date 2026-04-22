@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import {
   TrendingUp,
   CheckCircle,
@@ -27,29 +27,12 @@ type Recommendation = {
   match?: number;
   percentage?: number;
   ukt: number;
-  ukt_min?: number;
-  ukt_max?: number;
-  is_budget_safe?: boolean;
-  is_affordable?: boolean;
-  sesuai_ukt?: boolean;
-  ukt_status?: string;
   reasons?: string[];
-};
-
-type RecommendationMeta = {
-  budget: number;
-  total_ranked: number;
-  strict_budget_match_count: number;
-  used_budget_fallback: boolean;
-  budget_message: string | null;
-  affordable_major_count?: number;
-  unaffordable_major_count?: number;
 };
 
 type RecommendationResponse = {
   top3: Recommendation[];
   top10: Recommendation[];
-  meta?: RecommendationMeta;
 };
 
 const formatCurrency = (value: number) =>
@@ -58,18 +41,7 @@ const formatCurrency = (value: number) =>
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(value);
-
-const formatUktRange = (min?: number, max?: number) => {
-  if (typeof min === "number" && typeof max === "number") {
-    return `${formatCurrency(min)} - ${formatCurrency(max)}`;
-  }
-
-  if (typeof max === "number") {
-    return formatCurrency(max);
-  }
-
-  return "-";
-};
+const slugify = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
 
 const persistSelectedMajorContext = (value: SelectedMajorContext) => {
   localStorage.setItem("selected_major_context", JSON.stringify(value));
@@ -93,7 +65,6 @@ export default function ResultsPage() {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationResponse>({
     top3: [],
     top10: [],
@@ -106,15 +77,7 @@ export default function ResultsPage() {
       const storedInterestAnswers = localStorage.getItem("interest_answers");
       const storedBudget = localStorage.getItem("budget");
 
-      console.log("[ResultsPage] fetchRecommendations triggered", {
-        hasUser: Boolean(storedUser),
-        hasAcademicScores: Boolean(storedAcademicScores),
-        hasInterestAnswers: Boolean(storedInterestAnswers),
-        hasBudget: Boolean(storedBudget),
-      });
-
       if (!storedUser || !storedAcademicScores || !storedInterestAnswers || !storedBudget) {
-        console.warn("[ResultsPage] Incomplete analysis data in localStorage");
         alert("Data analisis belum lengkap");
         navigate("/analysis/step1");
         return;
@@ -122,61 +85,34 @@ export default function ResultsPage() {
 
       try {
         setIsLoading(true);
-        setFetchError(null);
 
         const user = JSON.parse(storedUser);
         const academicScores = JSON.parse(storedAcademicScores);
         const interestAnswers = JSON.parse(storedInterestAnswers);
-        const payload = {
-          user_id: user.id,
-          academic_scores: academicScores,
-          interest_answers: interestAnswers,
-          budget: Number(storedBudget),
-        };
-
-        console.log("[ResultsPage] Parsed request payload", payload);
 
         const res = await fetch("http://localhost:5000/recommend", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            user_id: user.id,
+            academic_scores: academicScores,
+            interest_answers: interestAnswers,
+            budget: Number(storedBudget),
+          }),
         });
 
         const result = await res.json();
-
-        console.log("[ResultsPage] Recommendation API response", {
-          status: res.status,
-          ok: res.ok,
-          body: result,
-        });
 
         if (!res.ok) {
           throw new Error(result.error || "Gagal mengambil rekomendasi");
         }
 
-        const normalizedResult: RecommendationResponse = {
-          top3: Array.isArray(result.top3) ? result.top3 : [],
-          top10: Array.isArray(result.top10) ? result.top10 : [],
-          meta: result.meta,
-        };
-
-        console.log("[ResultsPage] Setting recommendations state", normalizedResult);
-        setRecommendations(normalizedResult);
-
-        if (normalizedResult.top10.length === 0) {
-          console.warn("[ResultsPage] API succeeded but returned no recommendations");
-          setFetchError("Belum ada jurusan yang bisa ditampilkan dari data saat ini.");
-        }
+        setRecommendations(result);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Gagal mengambil rekomendasi";
-        console.error("[ResultsPage] Failed to fetch recommendations", error);
-        setFetchError(message);
-        setRecommendations({
-          top3: [],
-          top10: [],
-        });
+        alert(error instanceof Error ? error.message : "Gagal mengambil rekomendasi");
+        navigate("/analysis/step1");
       } finally {
         setIsLoading(false);
       }
@@ -184,10 +120,6 @@ export default function ResultsPage() {
 
     void fetchRecommendations();
   }, [navigate]);
-
-  useEffect(() => {
-    console.log("[ResultsPage] recommendations state updated", recommendations);
-  }, [recommendations]);
 
   const topRecommendations = recommendations.top3.map((rec, index) => {
     const slug = rec.slug ?? "";
@@ -199,7 +131,7 @@ export default function ResultsPage() {
       name: majorData?.name ?? rec.name ?? "Data jurusan tidak ditemukan",
       match,
       description: majorData?.description ?? "Data jurusan tidak ditemukan",
-      icon: majorData?.icon ?? getMajorIcon(rec.name ?? slug),
+      icon: majorData?.icon ?? "??",
       color:
         majorData?.color ??
         [
@@ -212,24 +144,16 @@ export default function ResultsPage() {
       tagColor: match >= 85 ? "bg-green-500" : "bg-yellow-500",
       reasons: rec.reasons ?? [],
       careerProspects: majorData?.careerProspects ?? [],
-      ukt: formatUktRange(rec.ukt_min, rec.ukt_max ?? rec.ukt),
-      isBudgetSafe: rec.is_affordable ?? rec.sesuai_ukt ?? rec.is_budget_safe ?? true,
-      uktStatus: rec.ukt_status ?? ((rec.is_affordable ?? rec.sesuai_ukt ?? rec.is_budget_safe ?? true) ? "Sesuai UKT" : "Di luar UKT"),
+      ukt: formatCurrency(rec.ukt),
     };
   });
 
-  const allRecommendations = recommendations.top10.map((rec, index) => {
-    const isAffordable = rec.is_affordable ?? rec.sesuai_ukt ?? rec.is_budget_safe ?? true;
-
-    return {
-      rank: index + 1,
-      slug: rec.slug ?? "",
-      name: majors[rec.slug ?? ""]?.name ?? rec.name ?? "Data jurusan tidak ditemukan",
-      match: Math.round(rec.match ?? rec.percentage ?? 0),
-      isAffordable,
-      uktStatus: rec.ukt_status ?? (isAffordable ? "Sesuai UKT" : "Di luar UKT"),
-    };
-  });
+  const allRecommendations = recommendations.top10.map((rec, index) => ({
+    rank: index + 1,
+    slug: rec.slug ?? "",
+    name: majors[rec.slug ?? ""]?.name ?? rec.name ?? "Data jurusan tidak ditemukan",
+    match: Math.round(rec.match ?? rec.percentage ?? 0),
+  }));
 
   const topPick = topRecommendations[0];
 
@@ -265,137 +189,101 @@ export default function ResultsPage() {
             <p className="text-[#2B2D42]/70 text-sm md:text-lg px-4">
               Berdasarkan data yang kamu berikan, berikut rekomendasi terbaik untukmu
             </p>
-            {recommendations.meta && (
-              <p className="mt-2 text-xs md:text-sm text-[#2B2D42]/60 px-4">
-                Menampilkan {Math.min(recommendations.top10.length, 10)} dari {recommendations.meta.total_ranked} jurusan hasil ranking. Jurusan di luar budget tetap ditampilkan dengan penanda khusus.
-              </p>
-            )}
           </motion.div>
 
-          {(recommendations.meta?.budget_message || fetchError) && (
-            <motion.div
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="mb-6 rounded-2xl border border-[#C8B6FF]/30 bg-white/60 px-4 py-4 text-sm text-[#2B2D42]/80 shadow-lg"
-            >
-              {fetchError ?? recommendations.meta?.budget_message}
-            </motion.div>
-          )}
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
-            {topRecommendations.length > 0 ? (
-              topRecommendations.map((rec, index) => (
-                <motion.div
-                  key={`${rec.slug}-${index}`}
-                  initial={{ y: 50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 + index * 0.1 }}
-                  className="relative cursor-pointer"
-                  onClick={() => {
-                    persistSelectedMajorContext({ id: rec.slug, match: rec.match });
-                    navigate(`/major/${rec.slug}`, {
-                      state: { match: rec.match },
-                    });
-                  }}
-                  whileHover={{ y: -5 }}
-                >
-                  {index === 0 && (
-                    <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 z-10">
-                      <div className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full text-white font-semibold text-xs md:text-sm shadow-lg flex items-center gap-1.5 md:gap-2">
-                        <Award className="w-3 h-3 md:w-4 md:h-4" />
-                        Top Pick
-                      </div>
-                    </div>
-                  )}
-                  <div className="bg-white/40 backdrop-blur-2xl rounded-2xl md:rounded-[30px] p-5 md:p-8 border border-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 h-full">
-                    <div className="relative w-28 h-28 md:w-32 md:h-32 mx-auto mb-4 md:mb-6">
-                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="52" stroke="#E5E7EB" strokeWidth="8" fill="none" />
-                        <circle
-                          cx="60"
-                          cy="60"
-                          r="52"
-                          stroke={`url(#gradient-${index})`}
-                          strokeWidth="8"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 52}`}
-                          strokeDashoffset={`${2 * Math.PI * 52 * (1 - rec.match / 100)}`}
-                          strokeLinecap="round"
-                        />
-                        <defs>
-                          <linearGradient id={`gradient-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#C8B6FF" />
-                            <stop offset="100%" stopColor="#FFC8DD" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl md:text-4xl mb-1">{rec.icon}</span>
-                        <span className="text-xl md:text-2xl font-bold text-[#2B2D42]">{rec.match}%</span>
-                      </div>
-                    </div>
-
-                    <h3 className="text-base md:text-xl font-bold text-[#2B2D42] text-center mb-2 md:mb-3 px-2">
-                      {rec.name}
-                    </h3>
-
-                    <p className="text-xs md:text-sm text-[#2B2D42]/70 text-center mb-4">
-                      {rec.description}
-                    </p>
-
-                    <div className="flex justify-center mb-4 md:mb-6">
-                      <span className={`px-3 md:px-4 py-1 md:py-1.5 ${rec.tagColor} text-white text-xs md:text-sm font-semibold rounded-full`}>
-                        {rec.tag}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm text-[#2B2D42]/70 mb-3 md:mb-4 pb-3 md:pb-4 border-b border-[#2B2D42]/10">
-                      <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
-                      <span>UKT: {rec.ukt}</span>
-                    </div>
-
-                    {!rec.isBudgetSafe && (
-                      <div className="mb-4 rounded-xl border border-[#FCA5A5] bg-[#FFF1F2] px-3 py-2 text-[11px] md:text-xs text-[#9F1239]">
-                        <span className="font-semibold">{rec.uktStatus}.</span> Budgetmu masih di bawah UKT minimum, tetapi jurusan ini tetap masuk ranking.
-                      </div>
-                    )}
-
-                    <div className="mb-3 md:mb-4">
-                      <p className="text-[11px] md:text-xs font-semibold text-[#2B2D42]/70 text-center mb-2">
-                        Prospek Karir
-                      </p>
-                      <div className="flex flex-wrap justify-center gap-2">
-                        {rec.careerProspects.slice(0, 2).map((career) => (
-                          <span key={career.title} className="px-2.5 py-1 bg-white/60 rounded-full text-[10px] md:text-xs text-[#2B2D42]/75">
-                            {career.title}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="text-center">
-                      <span className="text-xs md:text-sm text-[#C8B6FF] font-medium hover:underline flex items-center justify-center gap-1">
-                        Lihat Detail
-                        <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
-                      </span>
+            {topRecommendations.map((rec, index) => (
+              <motion.div
+                key={`${rec.slug}-${index}`}
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 + index * 0.1 }}
+                className="relative cursor-pointer"
+               onClick={() => {
+  persistSelectedMajorContext({ id: rec.slug, match: rec.match });
+  navigate(`/major/${rec.slug}`, {
+    state: { match: rec.match },
+  });
+}}
+                whileHover={{ y: -5 }}
+              >
+                {index === 0 && (
+                  <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 z-10">
+                    <div className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full text-white font-semibold text-xs md:text-sm shadow-lg flex items-center gap-1.5 md:gap-2">
+                      <Award className="w-3 h-3 md:w-4 md:h-4" />
+                      Top Pick
                     </div>
                   </div>
-                </motion.div>
-              ))
-            ) : (
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="lg:col-span-3 rounded-2xl md:rounded-[30px] border border-white/60 bg-white/50 p-6 md:p-8 text-center shadow-xl"
-              >
-                <p className="text-base md:text-lg font-semibold text-[#2B2D42] mb-2">
-                  Hasil rekomendasi belum tersedia
-                </p>
-                <p className="text-sm md:text-base text-[#2B2D42]/70">
-                  Periksa log browser dan response API untuk memastikan payload sudah lengkap, lalu coba ulangi analisis.
-                </p>
+                )}
+                <div className="bg-white/40 backdrop-blur-2xl rounded-2xl md:rounded-[30px] p-5 md:p-8 border border-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 h-full">
+                  <div className="relative w-28 h-28 md:w-32 md:h-32 mx-auto mb-4 md:mb-6">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="52" stroke="#E5E7EB" strokeWidth="8" fill="none" />
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="52"
+                        stroke={`url(#gradient-${index})`}
+                        strokeWidth="8"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 52}`}
+                        strokeDashoffset={`${2 * Math.PI * 52 * (1 - rec.match / 100)}`}
+                        strokeLinecap="round"
+                      />
+                      <defs>
+                        <linearGradient id={`gradient-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#C8B6FF" />
+                          <stop offset="100%" stopColor="#FFC8DD" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-3xl md:text-4xl mb-1">{rec.icon}</span>
+                      <span className="text-xl md:text-2xl font-bold text-[#2B2D42]">{rec.match}%</span>
+                    </div>
+                  </div>
+
+                  <h3 className="text-base md:text-xl font-bold text-[#2B2D42] text-center mb-2 md:mb-3 px-2">
+                    {rec.name}
+                  </h3>
+
+                  <p className="text-xs md:text-sm text-[#2B2D42]/70 text-center mb-4">
+                    {rec.description}
+                  </p>
+
+                  <div className="flex justify-center mb-4 md:mb-6">
+                    <span className={`px-3 md:px-4 py-1 md:py-1.5 ${rec.tagColor} text-white text-xs md:text-sm font-semibold rounded-full`}>
+                      {rec.tag}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm text-[#2B2D42]/70 mb-3 md:mb-4 pb-3 md:pb-4 border-b border-[#2B2D42]/10">
+                    <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
+                    <span>UKT: {rec.ukt}</span>
+                  </div>
+
+                  <div className="mb-3 md:mb-4">
+                    <p className="text-[11px] md:text-xs font-semibold text-[#2B2D42]/70 text-center mb-2">
+                      Prospek Karir
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {rec.careerProspects.slice(0, 2).map((career) => (
+                        <span key={career.title} className="px-2.5 py-1 bg-white/60 rounded-full text-[10px] md:text-xs text-[#2B2D42]/75">
+                          {career.title}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="text-center">
+                    <span className="text-xs md:text-sm text-[#C8B6FF] font-medium hover:underline flex items-center justify-center gap-1">
+                      Lihat Detail
+                      <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+                    </span>
+                  </div>
+                </div>
               </motion.div>
-            )}
+            ))}
           </div>
 
           <motion.div
@@ -466,73 +354,48 @@ export default function ResultsPage() {
               </button>
             </div>
             <div className="space-y-2 md:space-y-3">
-              {allRecommendations.length > 0 ? (
-                allRecommendations.slice(0, showAll ? 10 : 5).map((rec, index) => (
-                  <motion.div
-                    key={rec.rank}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.8 + index * 0.05 }}
-                    onClick={() => {
-                      persistSelectedMajorContext({ id: rec.slug, match: rec.match });
-                      navigate(`/major/${rec.slug}`, {
-                        state: { match: rec.match },
-                      });
-                    }}
-                    className={`flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-[16px] transition-all duration-200 group cursor-pointer gap-2 border ${
-                      rec.isAffordable
-                        ? "bg-white/50 border-transparent hover:bg-white/70"
-                        : "bg-[#FFF1F2]/80 border-[#FECDD3] hover:bg-[#FFE4E6]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
-                      <div
-                        className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm md:text-base flex-shrink-0 ${
-                          rec.rank <= 3
-                            ? "bg-gradient-to-br from-[#C8B6FF] to-[#FFC8DD] text-white"
-                            : "bg-[#2B2D42]/10 text-[#2B2D42]/70"
-                        }`}
-                      >
-                        {rec.rank}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="font-medium text-xs md:text-base text-[#2B2D42] truncate block">{rec.name}</span>
-                        {!rec.isAffordable && (
-                          <span className="inline-flex mt-1 rounded-full bg-[#FEE2E2] px-2 py-0.5 text-[10px] md:text-xs font-semibold text-[#B91C1C]">
-                            {rec.uktStatus}
-                          </span>
-                        )}
-                      </div>
+              {allRecommendations.slice(0, showAll ? 10 : 5).map((rec, index) => (
+                <motion.div
+                key={rec.rank}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.8 + index * 0.05 }}
+          onClick={() => {
+  persistSelectedMajorContext({ id: rec.slug, match: rec.match });
+  navigate(`/major/${rec.slug}`, {
+    state: { match: rec.match },
+  });
+}}
+                  className="flex items-center justify-between p-3 md:p-4 bg-white/50 rounded-xl md:rounded-[16px] hover:bg-white/70 transition-all duration-200 group cursor-pointer gap-2"
+                >
+                  <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
+                    <div
+                      className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm md:text-base flex-shrink-0 ${
+                        rec.rank <= 3
+                          ? "bg-gradient-to-br from-[#C8B6FF] to-[#FFC8DD] text-white"
+                          : "bg-[#2B2D42]/10 text-[#2B2D42]/70"
+                      }`}
+                    >
+                      {rec.rank}
                     </div>
-                    <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-                      <div className="hidden sm:block w-24 md:w-48 h-1.5 md:h-2 bg-[#2B2D42]/10 rounded-full overflow-hidden">
-                        <motion.div
-                          className={`h-full rounded-full ${
-                            rec.isAffordable
-                              ? "bg-gradient-to-r from-[#C8B6FF] to-[#FFC8DD]"
-                              : "bg-gradient-to-r from-[#FB7185] to-[#F97316]"
-                          }`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${rec.match}%` }}
-                          transition={{ duration: 1, delay: 0.8 + index * 0.05 }}
-                        />
-                      </div>
-                      <span
-                        className={`font-semibold text-sm md:text-base min-w-[45px] md:min-w-[50px] text-right ${
-                          rec.isAffordable ? "text-[#C8B6FF]" : "text-[#DC2626]"
-                        }`}
-                      >
-                        {rec.match}%
-                      </span>
-                      <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-[#2B2D42]/30 group-hover:text-[#C8B6FF] group-hover:translate-x-1 transition-all" />
+                    <span className="font-medium text-xs md:text-base text-[#2B2D42] truncate">{rec.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+                    <div className="hidden sm:block w-24 md:w-48 h-1.5 md:h-2 bg-[#2B2D42]/10 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-[#C8B6FF] to-[#FFC8DD] rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${rec.match}%` }}
+                        transition={{ duration: 1, delay: 0.8 + index * 0.05 }}
+                      />
                     </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="rounded-xl md:rounded-[16px] bg-white/50 p-4 text-sm text-[#2B2D42]/70">
-                  Top 10 rekomendasi belum tersedia.
-                </div>
-              )}
+                    <span className="font-semibold text-sm md:text-base text-[#C8B6FF] min-w-[45px] md:min-w-[50px] text-right">
+                      {rec.match}%
+                    </span>
+                    <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-[#2B2D42]/30 group-hover:text-[#C8B6FF] group-hover:translate-x-1 transition-all" />
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
 
