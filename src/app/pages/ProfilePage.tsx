@@ -147,7 +147,7 @@ export default function ProfilePage() {
               <div className="flex items-start gap-3 md:gap-6 pb-4 md:pb-6 border-b border-white/60">
                 <div className="relative flex-shrink-0">
                   <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#C8B6FF] to-[#A0E7E5] flex items-center justify-center text-white text-xl md:text-3xl font-semibold shadow-lg">
-                    {profile.name.split(" ").filter(Boolean).map((namePart) => namePart[0]).join("").slice(0, 2) || "U"}
+                    {profile.name.split(" ").filter(Boolean).map((namePart: any) => namePart[0]).join("").slice(0, 2) || "U"}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">

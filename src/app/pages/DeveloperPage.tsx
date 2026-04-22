@@ -293,7 +293,7 @@ export default function DeveloperPage() {
           className="bg-white/40 backdrop-blur-2xl rounded-[30px] p-8 border border-white/60 shadow-xl mb-8"
         >
           <h3 className="text-2xl font-semibold text-[#2B2D42] mb-6 text-center">
-            Contact & Social Media
+            Github
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
