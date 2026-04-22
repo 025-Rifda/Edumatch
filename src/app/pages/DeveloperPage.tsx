@@ -357,7 +357,7 @@ src="/foto-developer.jpeg"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#2B2D42] rounded-[16px] font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
             >
               <Mail className="w-5 h-5" />
-              Hubungi Saya
+              Kelompok 3
             </motion.a>
           </div>
         </motion.div>
