@@ -177,163 +177,204 @@ export default function MajorDetailPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-            className={`w-20 h-20 md:w-24 md:h-24 rounded-[20px] md:rounded-[24px] bg-gradient-to-br ${displayMajor.color} flex items-center justify-center text-4xl md:text-5xl shadow-2xl flex-shrink-0`}
-          >
-            {displayMajor.icon}
-          </motion.div>
-
-          <div className="flex-1 w-full">
-            <div className="flex flex-col md:flex-row items-start justify-between gap-3 md:gap-4 mb-4">
-              <div className="w-full md:flex-1">
-                <h1 className="text-2xl md:text-4xl font-bold text-[#2B2D42] mb-2">
-                  {displayMajor.name}
-                </h1>
-                <p className="text-sm md:text-lg text-[#2B2D42]/70">
-                  {displayMajor.shortDesc}
-                </p>
-              </div>
-
-              {displayMajor.match > 0 && (
+    <div className="min-h-screen bg-[#F6F1F8] px-3 py-4 md:px-6 md:py-6">
+      <div className="mx-auto max-w-[920px]">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4 md:space-y-5"
+        >
+          <section className="overflow-hidden rounded-[22px] border border-white/70 bg-white/90 shadow-[0_14px_40px_rgba(120,105,160,0.14)] backdrop-blur-sm md:rounded-[26px]">
+            <div className="px-4 pb-5 pt-4 md:px-6 md:pb-6 md:pt-5">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-5">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: "spring", delay: 0.3 }}
-                  className="w-full md:w-auto text-center"
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br ${displayMajor.color} text-3xl shadow-[0_16px_28px_rgba(200,182,255,0.28)] md:h-[72px] md:w-[72px] md:rounded-[20px] md:text-4xl`}
                 >
-                  <div
-                    className={`px-5 md:px-6 py-2.5 md:py-3 rounded-[12px] md:rounded-[16px] bg-gradient-to-r ${displayMajor.color} text-white shadow-xl`}
-                  >
-                    <p className="text-xs md:text-sm font-medium">
-                      Kesesuaian
+                  {displayMajor.icon}
+                </motion.div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h1 className="text-[28px] font-bold leading-tight tracking-[-0.02em] text-[#3C3550] md:text-[36px]">
+                        {displayMajor.name}
+                      </h1>
+                      <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[#7C7690] md:text-[14px] md:leading-6">
+                        {displayMajor.shortDesc}
+                      </p>
+                    </div>
+
+                    {displayMajor.match > 0 && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", delay: 0.3 }}
+                        className="self-start"
+                      >
+                        <div className="rounded-[16px] bg-gradient-to-br from-[#D6B6FF] via-[#E6C2FF] to-[#FFC8DD] px-4 py-2 text-center text-white shadow-[0_16px_28px_rgba(214,182,255,0.35)] md:min-w-[94px]">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/85">
+                            Kesesuaian
+                          </p>
+                          <p className="mt-1 text-[28px] font-extrabold leading-none md:text-[30px]">
+                            {displayMajor.match}%
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-4 border-t border-[#EEE6F4] pt-4 md:mt-6 md:grid-cols-4 md:gap-x-5 md:pt-5">
+                <div className="text-center">
+                  <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#F4ECFF]">
+                    <Clock className="h-3.5 w-3.5 text-[#BA9CF7]" />
+                  </div>
+                  <p className="text-[10px] font-medium text-[#B1A6C5] md:text-[11px]">
+                    Durasi
+                  </p>
+                  <p className="mt-1 text-[11px] font-semibold text-[#403850] md:text-[12px]">
+                    {displayMajor.duration}
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#F4ECFF]">
+                    <Award className="h-3.5 w-3.5 text-[#BA9CF7]" />
+                  </div>
+                  <p className="text-[10px] font-medium text-[#B1A6C5] md:text-[11px]">
+                    Akreditasi
+                  </p>
+                  <p className="mt-1 text-[11px] font-semibold text-[#403850] md:text-[12px]">
+                    {displayMajor.accreditation}
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#F4ECFF]">
+                    <Users className="h-3.5 w-3.5 text-[#BA9CF7]" />
+                  </div>
+                  <p className="text-[10px] font-medium text-[#B1A6C5] md:text-[11px]">
+                    Mahasiswa
+                  </p>
+                  <p className="mt-1 text-[11px] font-semibold text-[#403850] md:text-[12px]">
+                    {displayMajor.totalStudents}
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#F4ECFF]">
+                    <DollarSign className="h-3.5 w-3.5 text-[#BA9CF7]" />
+                  </div>
+                  <p className="text-[10px] font-medium text-[#B1A6C5] md:text-[11px]">
+                    UKT
+                  </p>
+                  <p className="mt-1 text-[11px] font-semibold text-[#403850] md:text-[12px]">
+                    {displayMajor.uktRange?.split(" - ")?.[0] ?? displayMajor.uktRange}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[20px] border border-white/70 bg-white/90 px-4 py-5 shadow-[0_14px_40px_rgba(120,105,160,0.12)] md:rounded-[24px] md:px-5 md:py-6">
+            <div className="mb-3 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#F7C9DE] to-[#E6CFFF] text-[13px] shadow-sm">
+                <span>📖</span>
+              </div>
+              <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[#3E3650] md:text-[24px]">
+                Tentang Jurusan
+              </h2>
+            </div>
+            <p className="text-[13px] leading-7 text-[#6F6884] md:text-[14px]">
+              {displayMajor.description}
+            </p>
+          </section>
+
+          <section className="rounded-[20px] border border-white/70 bg-white/90 px-4 py-5 shadow-[0_14px_40px_rgba(120,105,160,0.12)] md:rounded-[24px] md:px-5 md:py-6">
+            <div className="mb-4 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#BCEFFF] to-[#D9F6FF] text-[13px] shadow-sm">
+                <span>🧠</span>
+              </div>
+              <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[#3E3650] md:text-[24px]">
+                Apa yang Akan Dipelajari?
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2">
+              {displayMajor.whatYouLearn.map((item: string) => (
+                <div key={item} className="flex items-start gap-2.5">
+                  <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#ECFFF1] text-[11px] text-[#22B45A]">
+                    ✓
+                  </div>
+                  <span className="text-[13px] leading-6 text-[#6F6884] md:text-[14px]">
+                    {item}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-[20px] border border-white/70 bg-white/90 px-4 py-5 shadow-[0_14px_40px_rgba(120,105,160,0.12)] md:rounded-[24px] md:px-5 md:py-6">
+            <div className="mb-4 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FFC8DD] to-[#FFDCE9] text-[13px] shadow-sm">
+                <span>💼</span>
+              </div>
+              <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[#3E3650] md:text-[24px]">
+                Prospek Karir
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-x-6 md:gap-y-4">
+              {displayMajor.careerProspects.map((career: { title: string; salary: string }, index: number) => (
+                <div
+                  key={career.title}
+                  className="flex items-start justify-between gap-4 rounded-[18px] border border-[#F2EAF7] bg-[#FFFDFF] px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-[#3F3750] md:text-[14px]">
+                      {career.title}
                     </p>
-                    <p className="text-2xl md:text-3xl font-bold">
-                      {displayMajor.match}%
+                    <p className="mt-1 text-[11px] text-[#7E7792] md:text-[12px]">
+                      ↗ {career.salary}
                     </p>
                   </div>
-                </motion.div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 md:mt-6">
-              <div className="bg-white/50 rounded-[12px] md:rounded-[14px] p-2.5 md:p-3 text-center">
-                <Clock className="w-4 h-4 md:w-5 md:h-5 mx-auto mb-1 text-[#C8B6FF]" />
-                <p className="text-[10px] md:text-xs text-[#2B2D42]/60 mb-1">
-                  Durasi
-                </p>
-                <p className="text-xs md:text-sm font-semibold text-[#2B2D42]">
-                  {displayMajor.duration}
-                </p>
-              </div>
-
-              <div className="bg-white/50 rounded-[12px] md:rounded-[14px] p-2.5 md:p-3 text-center">
-                <Award className="w-4 h-4 md:w-5 md:h-5 mx-auto mb-1 text-[#C8B6FF]" />
-                <p className="text-[10px] md:text-xs text-[#2B2D42]/60 mb-1">
-                  Akreditasi
-                </p>
-                <p className="text-xs md:text-sm font-semibold text-[#2B2D42]">
-                  {displayMajor.accreditation}
-                </p>
-              </div>
-
-              <div className="bg-white/50 rounded-[12px] md:rounded-[14px] p-2.5 md:p-3 text-center">
-                <Users className="w-4 h-4 md:w-5 md:h-5 mx-auto mb-1 text-[#C8B6FF]" />
-                <p className="text-[10px] md:text-xs text-[#2B2D42]/60 mb-1">
-                  Mahasiswa
-                </p>
-                <p className="text-xs md:text-sm font-semibold text-[#2B2D42]">
-                  {displayMajor.totalStudents}
-                </p>
-              </div>
-
-              <div className="bg-white/50 rounded-[12px] md:rounded-[14px] p-2.5 md:p-3 text-center">
-                <DollarSign className="w-4 h-4 md:w-5 md:h-5 mx-auto mb-1 text-[#C8B6FF]" />
-                <p className="text-[10px] md:text-xs text-[#2B2D42]/60 mb-1">
-                  UKT
-                </p>
-                <p className="text-xs md:text-sm font-semibold text-[#2B2D42] truncate">
-                  {displayMajor.uktRange?.split(" - ")?.[0] ?? displayMajor.uktRange}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 md:mt-8 grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 md:gap-6">
-              <div className="bg-white/50 rounded-[18px] md:rounded-[22px] p-4 md:p-6">
-                <h2 className="text-lg md:text-2xl font-semibold text-[#2B2D42] mb-3">
-                  Tentang Jurusan
-                </h2>
-                <p className="text-sm md:text-base text-[#2B2D42]/75 leading-7">
-                  {displayMajor.description}
-                </p>
-              </div>
-
-              <div className="bg-white/50 rounded-[18px] md:rounded-[22px] p-4 md:p-6">
-                <h2 className="text-lg md:text-2xl font-semibold text-[#2B2D42] mb-3">
-                  Kenapa Dipilih
-                </h2>
-                <div className="space-y-2">
-                  {displayMajor.whyChoose.map((reason: string) => (
-                    <div
-                      key={reason}
-                      className="rounded-[14px] bg-white/70 px-3 py-2 text-sm md:text-base text-[#2B2D42]/80"
-                    >
-                      {reason}
-                    </div>
-                  ))}
+                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#DABEFF] to-[#F4C5DD] text-[11px] font-bold text-white">
+                    {index + 1}
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
+          </section>
 
-            <div className="mt-4 md:mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              <div className="bg-white/50 rounded-[18px] md:rounded-[22px] p-4 md:p-6">
-                <h2 className="text-lg md:text-2xl font-semibold text-[#2B2D42] mb-3">
-                  Yang Akan Dipelajari
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {displayMajor.whatYouLearn.map((item: string) => (
-                    <span
-                      key={item}
-                      className="px-3 py-2 rounded-full bg-white/70 text-sm md:text-base text-[#2B2D42]/80"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
+          <section className="rounded-[20px] border border-white/70 bg-white/90 px-4 py-5 shadow-[0_14px_40px_rgba(120,105,160,0.12)] md:rounded-[24px] md:px-5 md:py-6">
+            <div className="mb-4 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD26F] to-[#FFB93A] text-[13px] shadow-sm">
+                <span>✨</span>
               </div>
-
-              <div className="bg-white/50 rounded-[18px] md:rounded-[22px] p-4 md:p-6">
-                <h2 className="text-lg md:text-2xl font-semibold text-[#2B2D42] mb-3">
-                  Prospek Karir
-                </h2>
-                <div className="space-y-2">
-                  {displayMajor.careerProspects.map((career: { title: string; salary: string }) => (
-                    <div
-                      key={career.title}
-                      className="flex items-center justify-between gap-3 rounded-[14px] bg-white/70 px-3 py-2"
-                    >
-                      <span className="text-sm md:text-base font-medium text-[#2B2D42]">
-                        {career.title}
-                      </span>
-                      <span className="text-xs md:text-sm text-[#2B2D42]/65 text-right">
-                        {career.salary}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[#3E3650] md:text-[24px]">
+                Kenapa Pilih Jurusan Ini?
+              </h2>
             </div>
-          </div>
-        </div>
-      </motion.div>
+            <div className="space-y-2.5">
+              {displayMajor.whyChoose.map((reason: string) => (
+                <div
+                  key={reason}
+                  className="flex items-start gap-3 rounded-[14px] border border-[#E9D9F8] bg-[#FCF8FF] px-3.5 py-3"
+                >
+                  <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E2C8FF] to-[#F6D2E5] text-[10px] text-white">
+                    •
+                  </div>
+                  <p className="text-[13px] leading-6 text-[#6F6884] md:text-[14px]">
+                    {reason}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </motion.div>
+      </div>
     </div>
   );
 }
