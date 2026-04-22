@@ -43,6 +43,10 @@ export default function InterestQuizPage() {
     ((currentQuestion + 1) / questions.length) * 100;
 
   const handleAnswer = (score: number) => {
+    console.log("[InterestQuizPage] answer selected", {
+      currentQuestion,
+      score,
+    });
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = score;
     setAnswers(newAnswers);
@@ -68,13 +72,21 @@ export default function InterestQuizPage() {
 
   const handleNext = () => {
     if (answers[currentQuestion] === 0) {
+      console.warn("[InterestQuizPage] handleNext blocked because current answer is empty", {
+        currentQuestion,
+      });
       return;
     }
 
     if (currentQuestion === questions.length - 1) {
+      console.log("[InterestQuizPage] storing interest_answers", answers);
       localStorage.setItem("interest_answers", JSON.stringify(answers));
       navigate("/analysis/step3");
     } else {
+      console.log("[InterestQuizPage] moving to next question", {
+        currentQuestion,
+        nextQuestion: currentQuestion + 1,
+      });
       setDirection(1);
       setTimeout(() => {
         setCurrentQuestion(currentQuestion + 1);

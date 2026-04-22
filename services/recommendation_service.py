@@ -155,17 +155,30 @@ MAJOR_RECOMMENDATION_PROFILES = {
 
 
 def recommend_majors(payload: dict) -> tuple[dict, int]:
+    print(
+        "[recommend_majors] Incoming payload:",
+        {
+            "user_id": payload.get("user_id"),
+            "academic_score_keys": sorted((payload.get("academic_scores") or {}).keys()) if isinstance(payload.get("academic_scores"), dict) else None,
+            "interest_answer_count": len(payload.get("interest_scores", payload.get("interest_answers")) or []) if isinstance(payload.get("interest_scores", payload.get("interest_answers")), list) else None,
+            "budget": payload.get("budget"),
+        },
+    )
+
     try:
         user_id = int(payload.get("user_id"))
     except (TypeError, ValueError):
+        print("[recommend_majors] Invalid user_id:", payload.get("user_id"))
         return {"error": "user_id must be an integer."}, 400
 
     user = get_user_by_id(user_id)
     if user is None:
+        print("[recommend_majors] User not found:", user_id)
         return {"error": "User not found."}, 404
 
     user_jurusan = _normalize_jurusan(user.get("jurusan"))
     if user_jurusan is None:
+        print("[recommend_majors] Invalid jurusan for user:", user)
         return {"error": "User jurusan is invalid."}, 400
 
     academic_scores = payload.get("academic_scores")
@@ -177,23 +190,42 @@ def recommend_majors(payload: dict) -> tuple[dict, int]:
         jurusan=user_jurusan,
     )
     if academic_validation is not None or normalized_academic_scores is None:
+        print("[recommend_majors] Academic validation failed:", academic_validation)
         return academic_validation or {"error": "academic_scores is invalid."}, 400
 
     interest_validation = _validate_interest_scores(interest_scores)
     if interest_validation is not None:
+        print("[recommend_majors] Interest validation failed:", interest_validation)
         return interest_validation, 400
 
     try:
         budget = int(budget)
     except (TypeError, ValueError):
+        print("[recommend_majors] Invalid budget:", budget)
         return {"error": "budget must be an integer."}, 400
 
     if budget <= 0:
+        print("[recommend_majors] Non-positive budget:", budget)
         return {"error": "budget must be greater than zero."}, 400
 
     interest_profile = calculate_interest_profile(interest_scores)
     overall_interest_score, _ = calculate_interest_score(interest_scores)
-    eligible_majors = filter_majors_by_budget(get_all_majors(), budget)
+    all_majors = get_all_majors()
+    eligible_majors, budget_metadata = filter_majors_by_budget(all_majors, budget)
+
+    print(
+        "[recommend_majors] Validation passed.",
+        {
+            "user_id": user_id,
+            "user_jurusan": user_jurusan,
+            "academic_subject_count": len(normalized_academic_scores),
+            "interest_dimensions": interest_profile,
+            "overall_interest_score": overall_interest_score,
+            "strict_budget_match_count": budget_metadata["strict_budget_match_count"],
+            "eligible_majors_count": len(eligible_majors),
+            "used_budget_fallback": budget_metadata["used_budget_fallback"],
+        },
+    )
 
     ranked_majors = rank_majors(
         majors=eligible_majors,
@@ -207,9 +239,27 @@ def recommend_majors(payload: dict) -> tuple[dict, int]:
     result_payload = {
         "top3": ranked_majors[:3],
         "top10": ranked_majors[:10],
+        "meta": {
+            "budget": budget,
+            "total_ranked": len(ranked_majors),
+            **budget_metadata,
+        },
     }
 
-    create_result(user_id, json.dumps(result_payload))
+    print(
+        "[recommend_majors] Ranked majors ready:",
+        {
+            "top3": [major["slug"] for major in ranked_majors[:3]],
+            "top10_count": min(len(ranked_majors), 10),
+        },
+    )
+
+    try:
+        create_result(user_id, json.dumps(result_payload))
+    except Exception as error:
+        print("[recommend_majors] Failed to persist result history:", repr(error))
+        result_payload["meta"]["history_persist_error"] = str(error)
+
     return result_payload, 200
 
 
@@ -273,14 +323,60 @@ def defuzzify_interest(membership: dict[str, float]) -> float:
     return numerator / denominator
 
 
-def filter_majors_by_budget(majors: list[dict], budget: int) -> list[dict]:
-    return [major for major in majors if int(major["ukt"]) <= budget]
+def filter_majors_by_budget(majors: list[dict], budget: int) -> tuple[list[dict], dict]:
+    strict_matches = [
+        major
+        for major in majors
+        if int(major.get("ukt_min", major["ukt"])) <= budget
+    ]
+
+    if strict_matches:
+        print(
+            "[filter_majors_by_budget] Strict budget matches found.",
+            {
+                "budget": budget,
+                "count": len(strict_matches),
+            },
+        )
+        return strict_matches, {
+            "strict_budget_match_count": len(strict_matches),
+            "used_budget_fallback": False,
+            "budget_message": None,
+        }
+
+    fallback_candidates = sorted(
+        majors,
+        key=lambda major: (
+            int(major.get("ukt_min", major["ukt"])),
+            int(major.get("ukt_max", major["ukt"])),
+            str(major["name"]),
+        ),
+    )[:10]
+
+    print(
+        "[filter_majors_by_budget] No strict budget matches. Using fallback candidates.",
+        {
+            "budget": budget,
+            "fallback_count": len(fallback_candidates),
+            "fallback_slugs": [major.get("slug") for major in fallback_candidates],
+        },
+    )
+    return fallback_candidates, {
+        "strict_budget_match_count": 0,
+        "used_budget_fallback": True,
+        "budget_message": "Tidak ada jurusan yang seluruh rentang UKT-nya masuk ke budgetmu. Sistem menampilkan opsi terdekat berdasarkan UKT minimum paling rendah.",
+    }
 
 
-def calculate_financial_match(major_ukt: int, budget: int) -> float:
-    if major_ukt > budget:
-        return 0.0
-    return round((major_ukt / budget) * 100, 2)
+def calculate_financial_match(major_ukt_min: int, major_ukt_max: int, budget: int) -> float:
+    if budget < major_ukt_min:
+        return round(max(0.0, min(60.0, (budget / major_ukt_min) * 60)), 2)
+
+    if budget <= major_ukt_max:
+        return 100.0
+
+    overshoot_ratio = (budget - major_ukt_max) / budget if budget else 0.0
+    return round(max(70.0, 100 - (overshoot_ratio * 30)), 2)
 
 
 def rank_majors(
@@ -296,8 +392,10 @@ def rank_majors(
     for major in majors:
         profile = get_major_recommendation_profile(major)
         field = major.get("field", "Soshum")
+        major_ukt_min = int(major.get("ukt_min", major["ukt"]))
+        major_ukt_max = int(major.get("ukt_max", major["ukt"]))
 
-        financial_match = calculate_financial_match(int(major["ukt"]), budget)
+        financial_match = calculate_financial_match(major_ukt_min, major_ukt_max, budget)
         major_interest_fit = calculate_major_interest_fit(
             interest_profile=interest_profile,
             overall_interest_score=overall_interest_score,
@@ -336,12 +434,13 @@ def rank_majors(
                 "academic_readiness": round(academic_readiness, 2),
                 "financial_match": financial_match,
                 "min_score": float(major["min_score"]),
-                "ukt": int(major["ukt"]),
-                "ukt_min": int(major.get("ukt_min", major["ukt"])),
-                "ukt_max": int(major.get("ukt_max", major["ukt"])),
+                "ukt": major_ukt_max,
+                "ukt_min": major_ukt_min,
+                "ukt_max": major_ukt_max,
                 "field": field,
                 "confidence": confidence,
                 "is_cross_track": is_cross_track,
+                "is_budget_safe": budget >= major_ukt_min,
                 "reasons": build_recommendation_reasons(
                     major=major,
                     profile=profile,
@@ -350,6 +449,7 @@ def rank_majors(
                     academic_support=academic_support,
                     academic_details=academic_details,
                     financial_match=financial_match,
+                    budget=budget,
                     user_jurusan=user_jurusan,
                     is_cross_track=is_cross_track,
                     confidence=confidence,
@@ -473,6 +573,7 @@ def build_recommendation_reasons(
     academic_support: float,
     academic_details: dict[str, float | list[str]],
     financial_match: float,
+    budget: int,
     user_jurusan: str,
     is_cross_track: bool,
     confidence: str,
@@ -507,10 +608,18 @@ def build_recommendation_reasons(
             "Sebagian mata pelajaran pendukung utama tidak ada di jalur sekolahmu saat ini, jadi confidence rekomendasi dibuat lebih hati-hati."
         )
 
-    if financial_match >= 75:
+    major_ukt_min = int(major.get("ukt_min", major["ukt"]))
+    major_ukt_max = int(major.get("ukt_max", major["ukt"]))
+    if major_ukt_min <= budget <= major_ukt_max:
         reasons.append("Kisaran UKT masih sejalan dengan budget yang kamu masukkan.")
+    elif budget > major_ukt_max:
+        reasons.append("Budgetmu berada di atas kisaran UKT jurusan ini, jadi opsi biaya masih aman.")
     elif financial_match >= 50:
         reasons.append("Kisaran UKT jurusan ini masih mungkin dijangkau, tetapi cukup mendekati batas budgetmu.")
+    else:
+        reasons.append(
+            f"UKT minimum jurusan ini mulai dari Rp {major_ukt_min:,}, jadi kamu mungkin perlu menyiapkan budget tambahan."
+        )
 
     if confidence == "high":
         reasons.append("Confidence rekomendasi ini tinggi karena minat dan kesiapan akademikmu sama-sama kuat.")

@@ -25,7 +25,14 @@ export default function BudgetInputPage() {
   ];
 
   const handleShowResults = () => {
+    console.log("[BudgetInputPage] handleShowResults triggered", {
+      budget,
+      hasAcademicScores: Boolean(localStorage.getItem("academic_scores")),
+      hasInterestAnswers: Boolean(localStorage.getItem("interest_answers")),
+      hasUser: Boolean(localStorage.getItem("user")),
+    });
     localStorage.setItem("budget", budget.toString());
+    console.log("[BudgetInputPage] budget stored", budget);
     navigate("/results");
   };
 

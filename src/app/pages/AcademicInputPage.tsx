@@ -101,12 +101,21 @@ export default function AcademicInputPage() {
   const handleChange = (field: string, value: string) => {
     const numValue = parseInt(value);
     if (value === "" || (numValue >= 0 && numValue <= 100)) {
+      console.log("[AcademicInputPage] score changed", {
+        field,
+        value,
+      });
       setScores((previousScores) => ({ ...previousScores, [field]: value }));
       setErrors((previousErrors) => ({ ...previousErrors, [field]: false }));
     }
   };
 
   const handleNext = () => {
+    console.log("[AcademicInputPage] handleNext triggered", {
+      userJurusan,
+      scores,
+    });
+
     const newErrors: Record<string, boolean> = {};
     Object.keys(scores).forEach((key) => {
       if (scores[key as keyof typeof scores] === "") {
@@ -115,6 +124,7 @@ export default function AcademicInputPage() {
     });
 
     if (Object.keys(newErrors).length > 0) {
+      console.warn("[AcademicInputPage] validation failed", newErrors);
       setErrors(newErrors);
     } else {
       const normalizedScores = Object.entries(scores).reduce<Record<string, number>>(
@@ -125,6 +135,7 @@ export default function AcademicInputPage() {
         {},
       );
 
+      console.log("[AcademicInputPage] storing academic_scores", normalizedScores);
       localStorage.setItem("academic_scores", JSON.stringify(normalizedScores));
       navigate("/analysis/step2");
     }
