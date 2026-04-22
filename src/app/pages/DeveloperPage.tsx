@@ -285,7 +285,7 @@ src="/foto-developer.jpeg"
         >
           <div className="mb-8 text-center">
             <h3 className="text-2xl font-semibold text-[#2B2D42]">
-              Contact & Social Media
+              Github Pengembang
             </h3>
             <p className="mt-2 text-sm text-[#2B2D42]/60">
               Temukan profil GitHub tim pengembang EduMatch.
