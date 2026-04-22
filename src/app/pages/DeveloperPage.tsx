@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Sparkles,
   Mail,
-  Linkedin,
   Github,
   Award,
   Code,
@@ -27,25 +26,16 @@ export default function DeveloperPage() {
 
   const contacts = [
     {
-      icon: Mail,
-      label: "Email",
-      value: "developer@edumatch.com",
-      link: "mailto:developer@edumatch.com",
-      color: "#C8B6FF",
+      name: "almas rifda zatadin",
+      url: "https://github.com/025-Rifda",
     },
     {
-      icon: Linkedin,
-      label: "LinkedIn",
-      value: "/edumatch-developer",
-      link: "https://linkedin.com",
-      color: "#FFC8DD",
+      name: "dinda dwi febiani",
+      url: "https://github.com/Dinda-2802",
     },
     {
-      icon: Github,
-      label: "GitHub",
-      value: "@edumatch-dev",
-      link: "https://github.com",
-      color: "#BDE0FE",
+      name: "elysa hayu noorhaini",
+      url: "https://github.com/Elysa-21",
     },
   ];
 
@@ -285,47 +275,55 @@ export default function DeveloperPage() {
           </motion.div>
         </div>
 
-        {/* Section 4: Contact */}
+        {/* Section 4: Contact & Social Media */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="bg-white/40 backdrop-blur-2xl rounded-[30px] p-8 border border-white/60 shadow-xl mb-8"
+          className="bg-white/45 backdrop-blur-2xl rounded-[32px] p-8 border border-white/70 shadow-xl mb-8"
         >
-          <h3 className="text-2xl font-semibold text-[#2B2D42] mb-6 text-center">
-            Github
-          </h3>
+          <div className="mb-8 text-center">
+            <h3 className="text-2xl font-semibold text-[#2B2D42]">
+              Contact & Social Media
+            </h3>
+            <p className="mt-2 text-sm text-[#2B2D42]/60">
+              Temukan profil GitHub tim pengembang EduMatch.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {contacts.map((contact, index) => {
-              const Icon = contact.icon;
               return (
                 <motion.a
                   key={index}
-                  href={contact.link}
+                  href={contact.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.7 + index * 0.1 }}
                   whileHover={{ y: -4, scale: 1.02 }}
-                  className="p-5 bg-white/50 rounded-[20px] border border-white/60 hover:shadow-xl transition-all duration-300 text-center group"
+                  className="group relative overflow-hidden rounded-[28px] border border-[#D8EAFE] bg-white/75 p-6 text-left shadow-[0_18px_50px_rgba(125,166,214,0.12)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(125,166,214,0.18)]"
                 >
-                  <div
-                    className="w-14 h-14 rounded-[16px] flex items-center justify-center mx-auto mb-3 shadow-md group-hover:scale-110 transition-transform duration-300"
-                    style={{
-                      background: `linear-gradient(135deg, ${contact.color}, ${contact.color}dd)`,
-                    }}
-                  >
-                    <Icon className="w-7 h-7 text-white" strokeWidth={2} />
+                  <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-[#EAF4FF] via-[#F4F9FF] to-transparent pointer-events-none" />
+                  <div className="relative z-10 flex flex-col items-start">
+                    <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#DCEEFF] text-[#3B82F6] shadow-[0_10px_25px_rgba(96,165,250,0.20)] transition-transform duration-300 group-hover:scale-105">
+                      <Github className="h-7 w-7" strokeWidth={2} />
+                    </div>
+
+                    <p className="text-lg font-bold capitalize text-[#1F2A44]">
+                      {contact.name}
+                    </p>
+
+                    <div className="mt-2 flex items-center gap-1.5 text-sm text-[#5B6B87]">
+                      <span className="truncate">{contact.url}</span>
+                      <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-[#7AA2D8]" />
+                    </div>
+
+                    <div className="mt-5 inline-flex items-center rounded-full bg-[#EFF6FF] px-3 py-1 text-xs font-semibold text-[#4C6FA8]">
+                      GitHub Profile
+                    </div>
                   </div>
-                  <p className="font-semibold text-[#2B2D42] mb-1">
-                    {contact.label}
-                  </p>
-                  <p className="text-sm text-[#2B2D42]/70 flex items-center justify-center gap-1">
-                    {contact.value}
-                    <ExternalLink className="w-3 h-3" />
-                  </p>
                 </motion.a>
               );
             })}
