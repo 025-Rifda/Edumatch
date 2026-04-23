@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Sparkles,
-  Mail,
   Github,
   Award,
   Code,
@@ -130,8 +129,7 @@ export default function DeveloperPage() {
               className="relative"
             >
               <div className="w-48 h-48 rounded-full overflow-hidden ring-8 ring-white/50 shadow-2xl">
-                <ImageWithFallback
-src="/foto-developer.jpeg"
+                <img src="/foto-developer.jpeg"
                 alt="Developer"
                 className="w-full h-full object-cover"
                 />
@@ -331,36 +329,6 @@ src="/foto-developer.jpeg"
           </div>
         </motion.div>
 
-        {/* Section 5: CTA */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#C8B6FF] via-[#FFC8DD] to-[#BDE0FE] rounded-[30px] p-10 shadow-2xl text-center"
-        >
-          {/* Decorative Blobs */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/20 rounded-full blur-2xl" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/20 rounded-full blur-2xl" />
-
-          <div className="relative z-10">
-            <h3 className="text-3xl font-bold text-white mb-4">
-              Tertarik Berkolaborasi?
-            </h3>
-            <p className="text-white/90 mb-6 max-w-2xl mx-auto leading-relaxed">
-              Jika kamu punya ide atau ingin mendiskusikan project serupa,
-              jangan ragu untuk menghubungi saya!
-            </p>
-            <motion.a
-              href="mailto:developer@edumatch.com"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#2B2D42] rounded-[16px] font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
-            >
-              <Mail className="w-5 h-5" />
-              Kelompok 3
-            </motion.a>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
