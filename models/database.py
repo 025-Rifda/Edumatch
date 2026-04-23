@@ -74,6 +74,28 @@ def initialize_database() -> None:
         cursor.execute("ALTER TABLE majors ADD COLUMN ukt_min INTEGER NOT NULL DEFAULT 0")
     if "ukt_max" not in major_columns:
         cursor.execute("ALTER TABLE majors ADD COLUMN ukt_max INTEGER NOT NULL DEFAULT 0")
+    if "match" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN match REAL NOT NULL DEFAULT 0")
+    if "duration" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN duration TEXT NOT NULL DEFAULT '8 Semester (4 Tahun)'")
+    if "accreditation" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN accreditation TEXT NOT NULL DEFAULT 'Baik'")
+    if "total_students" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN total_students TEXT NOT NULL DEFAULT 'Data belum tersedia'")
+    if "short_desc" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN short_desc TEXT NOT NULL DEFAULT ''")
+    if "description" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN description TEXT NOT NULL DEFAULT ''")
+    if "what_you_learn" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN what_you_learn TEXT NOT NULL DEFAULT '[]'")
+    if "career_prospects" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN career_prospects TEXT NOT NULL DEFAULT '[]'")
+    if "why_choose" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN why_choose TEXT NOT NULL DEFAULT '[]'")
+    if "icon" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN icon TEXT NOT NULL DEFAULT ''")
+    if "color" not in major_columns:
+        cursor.execute("ALTER TABLE majors ADD COLUMN color TEXT NOT NULL DEFAULT ''")
 
     cursor.execute(
         """
@@ -121,18 +143,6 @@ def initialize_database() -> None:
 
 
 def _sync_default_majors(cursor: sqlite3.Cursor) -> None:
-    valid_slugs = {major["slug"] for major in DEFAULT_MAJORS}
-    valid_names = {major["name"] for major in DEFAULT_MAJORS}
-
-    cursor.execute("SELECT id, slug, name FROM majors")
-    existing_rows = [dict(row) for row in cursor.fetchall()]
-
-    for row in existing_rows:
-        row_slug = row.get("slug")
-        row_name = row.get("name")
-        if row_slug not in valid_slugs and row_name not in valid_names:
-            cursor.execute("DELETE FROM majors WHERE id = ?", (row["id"],))
-
     for major in DEFAULT_MAJORS:
         cursor.execute("SELECT id FROM majors WHERE slug = ? OR name = ?", (major["slug"], major["name"]))
         existing = cursor.fetchone()

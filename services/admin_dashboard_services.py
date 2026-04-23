@@ -1,13 +1,14 @@
 from typing import Tuple, Dict, Any
 from models.major_model import get_all_majors
 from models.user_model import get_user_stats
+from services.major_service import serialize_major_list
 
 
 def get_all_majors_service() -> Tuple[Dict[str, Any], int]:
     """
     Returns all majors data and total count for admin dashboard.
     """
-    majors = get_all_majors()
+    majors = serialize_major_list(get_all_majors())
     return {
         'majors': majors,
         'total_count': len(majors)
@@ -21,10 +22,12 @@ def get_admin_dashboard_stats() -> Tuple[Dict[str, Any], int]:
     stats = get_user_stats()
     return {
         "total_users": stats["totalUsers"],
+        "total_majors": len(get_all_majors()),
         "active_users": stats["activeUsers"],
         "inactive_users": stats["inactiveUsers"],
         "stats": {
             "total_users": stats["totalUsers"],
+            "total_majors": len(get_all_majors()),
             "active_users": stats["activeUsers"],
             "inactive_users": stats["inactiveUsers"],
         },

@@ -17,6 +17,7 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [totalMajors, setTotalMajors] = useState(0);
 
   const formatTotal = (value: number) =>
     new Intl.NumberFormat("id-ID").format(value);
@@ -49,8 +50,10 @@ export default function AdminDashboard() {
         }
 
         setTotalUsers(Number(data.total_users ?? 0));
+        setTotalMajors(Number(data.total_majors ?? 0));
       } catch {
         setTotalUsers(0);
+        setTotalMajors(0);
       }
     };
 
@@ -67,7 +70,7 @@ export default function AdminDashboard() {
     },
     {
       label: "Total Jurusan",
-      value: "20",
+      value: formatTotal(totalMajors),
       icon: GraduationCap,
       gradient: "from-[#BDE0FE] to-[#A0E7E5]",
       delay: 0.2,

@@ -14,9 +14,20 @@ type RemoteMajor = {
   name: string;
   field: "Saintek" | "Soshum";
   min_score: number;
+  match: number;
   ukt: number;
   ukt_min: number;
   ukt_max: number;
+  duration?: string;
+  accreditation?: string;
+  total_students?: string;
+  short_desc?: string;
+  description?: string;
+  what_you_learn?: string[];
+  career_prospects?: { title: string; salary: string }[];
+  why_choose?: string[];
+  icon?: string;
+  color?: string;
 };
 
 const FIELD_THEME = {
@@ -148,24 +159,69 @@ export default function MajorDetailPage() {
     const localMajor = majorCatalog[majorSlug];
     const fallbackMajor = buildFallbackMajorDetail(majorSlug, remoteMajor);
     const storedMatch = getStoredMatch(majorSlug);
-    const displayedMatch = navigationState?.match ?? storedMatch ?? localMajor?.match ?? 0;
+    const remoteMajorDetail = remoteMajor
+      ? {
+          name: remoteMajor.name,
+          icon: remoteMajor.icon?.trim() || fallbackMajor.icon,
+          match: Number(remoteMajor.match ?? 0),
+          color: remoteMajor.color?.trim() || fallbackMajor.color,
+          shortDesc: remoteMajor.short_desc?.trim() || fallbackMajor.shortDesc,
+          description: remoteMajor.description?.trim() || fallbackMajor.description,
+          whatYouLearn:
+            remoteMajor.what_you_learn && remoteMajor.what_you_learn.length > 0
+              ? remoteMajor.what_you_learn
+              : fallbackMajor.whatYouLearn,
+          careerProspects:
+            remoteMajor.career_prospects && remoteMajor.career_prospects.length > 0
+              ? remoteMajor.career_prospects
+              : fallbackMajor.careerProspects,
+          duration: remoteMajor.duration?.trim() || fallbackMajor.duration,
+          uktRange: `${formatCurrency(remoteMajor.ukt_min ?? remoteMajor.ukt ?? 0)} - ${formatCurrency(remoteMajor.ukt_max ?? remoteMajor.ukt ?? 0)}`,
+          accreditation: remoteMajor.accreditation?.trim() || fallbackMajor.accreditation,
+          totalStudents: remoteMajor.total_students?.trim() || fallbackMajor.totalStudents,
+          whyChoose:
+            remoteMajor.why_choose && remoteMajor.why_choose.length > 0
+              ? remoteMajor.why_choose
+              : fallbackMajor.whyChoose,
+          field: remoteMajor.field,
+          minScore: remoteMajor.min_score,
+          uktMin: remoteMajor.ukt_min,
+          uktMax: remoteMajor.ukt_max,
+        }
+      : null;
+    const displayedMatch =
+      navigationState?.match ??
+      storedMatch ??
+      remoteMajorDetail?.match ??
+      localMajor?.match ??
+      0;
 
     return {
       ...fallbackMajor,
+      ...remoteMajorDetail,
       ...localMajor,
       match: displayedMatch,
-      name: localMajor?.name ?? fallbackMajor.name,
-      shortDesc: localMajor?.shortDesc ?? fallbackMajor.shortDesc,
-      description: localMajor?.description ?? fallbackMajor.description,
-      whatYouLearn: localMajor?.whatYouLearn ?? fallbackMajor.whatYouLearn,
-      careerProspects: localMajor?.careerProspects ?? fallbackMajor.careerProspects,
-      duration: localMajor?.duration ?? fallbackMajor.duration,
-      uktRange: localMajor?.uktRange ?? fallbackMajor.uktRange,
-      accreditation: localMajor?.accreditation ?? fallbackMajor.accreditation,
-      totalStudents: localMajor?.totalStudents ?? fallbackMajor.totalStudents,
-      whyChoose: localMajor?.whyChoose ?? fallbackMajor.whyChoose,
-      color: localMajor?.color ?? fallbackMajor.color,
-      icon: localMajor?.icon ?? fallbackMajor.icon,
+      name: remoteMajorDetail?.name ?? localMajor?.name ?? fallbackMajor.name,
+      shortDesc: remoteMajorDetail?.shortDesc ?? localMajor?.shortDesc ?? fallbackMajor.shortDesc,
+      description: remoteMajorDetail?.description ?? localMajor?.description ?? fallbackMajor.description,
+      whatYouLearn: remoteMajorDetail?.whatYouLearn ?? localMajor?.whatYouLearn ?? fallbackMajor.whatYouLearn,
+      careerProspects:
+        remoteMajorDetail?.careerProspects ??
+        localMajor?.careerProspects ??
+        fallbackMajor.careerProspects,
+      duration: remoteMajorDetail?.duration ?? localMajor?.duration ?? fallbackMajor.duration,
+      uktRange: remoteMajorDetail?.uktRange ?? localMajor?.uktRange ?? fallbackMajor.uktRange,
+      accreditation:
+        remoteMajorDetail?.accreditation ??
+        localMajor?.accreditation ??
+        fallbackMajor.accreditation,
+      totalStudents:
+        remoteMajorDetail?.totalStudents ??
+        localMajor?.totalStudents ??
+        fallbackMajor.totalStudents,
+      whyChoose: remoteMajorDetail?.whyChoose ?? localMajor?.whyChoose ?? fallbackMajor.whyChoose,
+      color: remoteMajorDetail?.color ?? localMajor?.color ?? fallbackMajor.color,
+      icon: remoteMajorDetail?.icon ?? localMajor?.icon ?? fallbackMajor.icon,
     };
   }, [majorSlug, navigationState?.match, remoteMajor]);
 

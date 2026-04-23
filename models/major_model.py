@@ -38,15 +38,50 @@ def create_major(
     ukt: int,
     ukt_min: int,
     ukt_max: int,
+    match: float,
+    duration: str,
+    accreditation: str,
+    total_students: str,
+    short_desc: str,
+    description: str,
+    what_you_learn: str,
+    career_prospects: str,
+    why_choose: str,
+    icon: str,
+    color: str,
 ) -> int:
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute(
         """
-        INSERT INTO majors (slug, name, field, min_score, ukt, ukt_min, ukt_max)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO majors (
+            slug, name, field, min_score, ukt, ukt_min, ukt_max,
+            match, duration, accreditation, total_students,
+            short_desc, description, what_you_learn, career_prospects,
+            why_choose, icon, color
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (slug, name, field, min_score, ukt, ukt_min, ukt_max),
+        (
+            slug,
+            name,
+            field,
+            min_score,
+            ukt,
+            ukt_min,
+            ukt_max,
+            match,
+            duration,
+            accreditation,
+            total_students,
+            short_desc,
+            description,
+            what_you_learn,
+            career_prospects,
+            why_choose,
+            icon,
+            color,
+        ),
     )
     connection.commit()
     major_id = cursor.lastrowid
@@ -63,16 +98,50 @@ def update_major(
     ukt: int,
     ukt_min: int,
     ukt_max: int,
+    match: float,
+    duration: str,
+    accreditation: str,
+    total_students: str,
+    short_desc: str,
+    description: str,
+    what_you_learn: str,
+    career_prospects: str,
+    why_choose: str,
+    icon: str,
+    color: str,
 ) -> None:
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute(
         """
         UPDATE majors
-        SET slug = ?, name = ?, field = ?, min_score = ?, ukt = ?, ukt_min = ?, ukt_max = ?
+        SET slug = ?, name = ?, field = ?, min_score = ?, ukt = ?, ukt_min = ?, ukt_max = ?,
+            match = ?, duration = ?, accreditation = ?, total_students = ?,
+            short_desc = ?, description = ?, what_you_learn = ?, career_prospects = ?,
+            why_choose = ?, icon = ?, color = ?
         WHERE id = ?
         """,
-        (slug, name, field, min_score, ukt, ukt_min, ukt_max, major_id),
+        (
+            slug,
+            name,
+            field,
+            min_score,
+            ukt,
+            ukt_min,
+            ukt_max,
+            match,
+            duration,
+            accreditation,
+            total_students,
+            short_desc,
+            description,
+            what_you_learn,
+            career_prospects,
+            why_choose,
+            icon,
+            color,
+            major_id,
+        ),
     )
     connection.commit()
     connection.close()
