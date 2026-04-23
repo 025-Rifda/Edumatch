@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Award, Clock, DollarSign, Users } from "lucide-react";
+import { ArrowLeft, Award, Clock, DollarSign, Users } from "lucide-react";
 import { majors as majorCatalog } from "../../data/majors";
 
 type MajorDetailNavigationState = {
@@ -104,6 +104,7 @@ const buildFallbackMajorDetail = (majorSlug: string, remoteMajor: RemoteMajor | 
 
 export default function MajorDetailPage() {
   const { majorId } = useParams();
+  const navigate = useNavigate();
   const location = useLocation();
   const [remoteMajor, setRemoteMajor] = useState<RemoteMajor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -184,6 +185,23 @@ export default function MajorDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4 md:space-y-5"
         >
+          <motion.button
+            whileHover={{ x: -3 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+                return;
+              }
+
+              navigate("/dashboard");
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-4 py-2 text-sm font-medium text-[#4A435D] shadow-[0_10px_24px_rgba(120,105,160,0.12)] backdrop-blur-sm transition hover:bg-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Kembali
+          </motion.button>
+
           <section className="overflow-hidden rounded-[22px] border border-white/70 bg-white/90 shadow-[0_14px_40px_rgba(120,105,160,0.14)] backdrop-blur-sm md:rounded-[26px]">
             <div className="px-4 pb-5 pt-4 md:px-6 md:pb-6 md:pt-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-5">
