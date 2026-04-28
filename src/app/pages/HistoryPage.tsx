@@ -250,7 +250,7 @@ export default function HistoryPage() {
                           </div>
 
                           <div className="flex-1 w-full md:w-auto min-w-0">
-                            <p className="text-[10px] md:text-sm text-[#2B2D42]/60 mb-0.5 md:mb-1">Rekomendasi Teratas</p>
+                            <p className="text-[10px] md:text-sm text-[#2B2D42]/60 mb-0.5 md:mb-1">Rekomendasi</p>
                             <p className="text-sm md:text-lg font-semibold text-[#2B2D42] truncate">{item.topMajor}</p>
                           </div>
 
