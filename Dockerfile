@@ -12,4 +12,4 @@ COPY models ./models
 COPY routes ./routes
 COPY services ./services
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} app:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} app:app"]
