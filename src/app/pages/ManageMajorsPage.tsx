@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { apiUrl } from "../../lib/api";
 
 type CareerProspect = {
   title: string;
@@ -75,7 +76,7 @@ export default function ManageMajorsPage() {
   const fetchMajors = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:5000/admin/majors");
+      const response = await fetch(apiUrl("/admin/majors"));
       const data = await response.json();
 
       if (!response.ok) {
@@ -167,7 +168,7 @@ export default function ManageMajorsPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/admin/major", {
+      const response = await fetch(apiUrl("/admin/major"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -218,7 +219,7 @@ export default function ManageMajorsPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const response = await fetch("http://localhost:5000/admin/major", {
+      const response = await fetch(apiUrl("/admin/major"), {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

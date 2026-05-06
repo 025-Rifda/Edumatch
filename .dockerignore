@@ -1,0 +1,10 @@
+.git
+.gitignore
+.venv
+__pycache__
+node_modules
+dist
+src
+Public
+guidelines
+*.pyc

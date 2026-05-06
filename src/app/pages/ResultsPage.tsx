@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { majors } from "../../data/majors";
+import { apiUrl } from "../../lib/api";
 
 type SelectedMajorContext = {
   id: string;
@@ -90,7 +91,7 @@ export default function ResultsPage() {
         const academicScores = JSON.parse(storedAcademicScores);
         const interestAnswers = JSON.parse(storedInterestAnswers);
 
-        const res = await fetch("http://localhost:5000/recommend", {
+        const res = await fetch(apiUrl("/recommend"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

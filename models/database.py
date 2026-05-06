@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from pathlib import Path
 
 from werkzeug.security import generate_password_hash
@@ -9,7 +10,7 @@ from models.result_hash import build_result_hash
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
-DATABASE_PATH = DATA_DIR / "edumatch.db"
+DATABASE_PATH = Path(os.environ.get("EDUMATCH_DATABASE_PATH", str(DATA_DIR / "edumatch.db")))
 
 DEFAULT_ADMIN = {
     "name": "Admin EduMatch",
@@ -25,7 +26,7 @@ def get_connection() -> sqlite3.Connection:
 
 
 def initialize_database() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = get_connection()
     cursor = connection.cursor()
 

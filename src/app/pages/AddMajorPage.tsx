@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiUrl } from "../../lib/api";
 
 type CareerProspectInput = {
   title: string;
@@ -300,7 +301,7 @@ export default function AddMajorPage() {
     setErrors((previous) => ({ ...previous, api: "" }));
 
     try {
-      const response = await fetch("http://localhost:5000/admin/major", {
+      const response = await fetch(apiUrl("/admin/major"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

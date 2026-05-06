@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, User, GraduationCap, ArrowRight, AlertCircle } from "lucide-react";
+import { apiUrl } from "../../lib/api";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ export default function RegisterPage() {
     try {
       setIsLoading(true);
 
-      const res = await fetch("http://localhost:5000/register", {
+      const res = await fetch(apiUrl("/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

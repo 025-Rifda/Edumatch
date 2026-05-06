@@ -9,6 +9,7 @@ import {
   BarChart3,
   Award,
 } from "lucide-react";
+import { apiUrl } from "../../lib/api";
 
 type HistoryMajor = {
   name: string;
@@ -35,7 +36,7 @@ export default function ProfilePage() {
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/history?user_id=${user.id}`);
+        const response = await fetch(apiUrl(`/history?user_id=${user.id}`));
         const data = await response.json();
 
         if (!response.ok) {

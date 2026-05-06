@@ -1,6 +1,7 @@
+import os
+
 from flask import Flask, jsonify
 from flask_cors import CORS
-import os
 
 from models.database import initialize_database
 from routes.admin_routes import admin_blueprint
@@ -29,14 +30,14 @@ def create_app() -> Flask:
                 "available_endpoints": [
                     "POST /register",
                     "POST /login",
-                "POST /recommend",
-                "GET /api/majors/<slug>",
-                "GET /history?user_id=<id>",
-                "GET /admin/stats",
-                "GET /api/admin/users/stats",
-                "POST /admin/major",
-                "PUT /admin/major",
-                "DELETE /admin/major",
+                    "POST /recommend",
+                    "GET /api/majors/<slug>",
+                    "GET /history?user_id=<id>",
+                    "GET /admin/stats",
+                    "GET /api/admin/users/stats",
+                    "POST /admin/major",
+                    "PUT /admin/major",
+                    "DELETE /admin/major",
                 ],
             }
         )
@@ -48,5 +49,8 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=os.environ.get("FLASK_DEBUG") == "1",
+    )

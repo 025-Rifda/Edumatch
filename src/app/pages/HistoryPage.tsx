@@ -10,6 +10,7 @@ import {
   Search,
   TrendingUp,
 } from "lucide-react";
+import { apiUrl } from "../../lib/api";
 import { majors } from "../../data/majors";
 
 type SelectedMajorContext = {
@@ -65,7 +66,7 @@ export default function HistoryPage() {
         setIsLoading(true);
 
         const user = JSON.parse(storedUser);
-        const res = await fetch(`http://localhost:5000/history?user_id=${user.id}`);
+        const res = await fetch(apiUrl(`/history?user_id=${user.id}`));
         const result = await res.json();
 
         if (!res.ok) {

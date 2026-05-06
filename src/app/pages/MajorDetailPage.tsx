@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Award, Clock, DollarSign, Users } from "lucide-react";
 import { majors as majorCatalog } from "../../data/majors";
+import { apiUrl } from "../../lib/api";
 
 type MajorDetailNavigationState = {
   match?: number;
@@ -132,7 +133,7 @@ export default function MajorDetailPage() {
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/api/majors/${majorSlug}`);
+        const response = await fetch(apiUrl(`/api/majors/${majorSlug}`));
         const result = await response.json();
 
         if (!response.ok) {

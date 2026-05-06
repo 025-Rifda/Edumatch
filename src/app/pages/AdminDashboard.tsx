@@ -11,6 +11,7 @@ import { StatCard } from "../components/admin/StatCard";
 import { UserGrowthChart } from "../components/admin/UserGrowthChart";
 import { FloatingBlobs } from "../components/admin/FloatingBlobs";
 import { UKTManagement } from "../components/admin/UKTManagement";
+import { apiUrl } from "../../lib/api";
 
 export default function AdminDashboard() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -42,7 +43,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchAdminStats = async () => {
       try {
-        const response = await fetch("http://localhost:5000/admin/stats");
+        const response = await fetch(apiUrl("/admin/stats"));
         const data = await response.json();
 
         if (!response.ok) {
