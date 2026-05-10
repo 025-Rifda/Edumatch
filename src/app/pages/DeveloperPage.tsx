@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import developerPhoto from "../../assets/foto-developer.jpeg";
 
 export default function DeveloperPage() {
   const navigate = useNavigate();
@@ -129,9 +130,10 @@ export default function DeveloperPage() {
               className="relative"
             >
               <div className="w-48 h-48 rounded-full overflow-hidden ring-8 ring-white/50 shadow-2xl">
-                <img src="/foto-developer.jpeg"
-                alt="Developer"
-                className="w-full h-full object-cover"
+                <ImageWithFallback
+                  src={developerPhoto}
+                  alt="Developer"
+                  className="w-full h-full object-cover"
                 />
               </div>
               {/* Verified Badge */}
